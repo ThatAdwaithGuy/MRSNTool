@@ -1,0 +1,71 @@
+package views
+
+// View wrapper rendering the form inside the CRM Layout
+templ CreateDesignPage() {
+	@Layout("CRM Terminal - New Design Entry", designForm())
+}
+
+// Interactive input form for the design table
+templ designForm() {
+	<div class="max-w-2xl mx-auto bg-slate-950 border border-slate-800 rounded-lg overflow-hidden shadow-xl">
+		<div class="px-6 py-4 border-b border-slate-800">
+			<h3 class="font-semibold text-lg text-slate-200">Create New Design Field Configuration</h3>
+			<p class="text-xs text-slate-400 mt-1">Register dynamic UI parameters for system terminal forms.</p>
+		</div>
+		
+		<form hx-post="/designs" hx-target="#form-message" hx-swap="innerHTML" class="p-6 space-y-6">
+			<div id="form-message"></div>
+
+			<div>
+				<label for="form_name" class="block text-sm font-medium text-slate-300 mb-2">Form Identifier Name</label>
+				<input type="text" id="form_name" name="form_name" placeholder="e.g., customer_onboarding" required
+					class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm transition"/>
+			</div>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<div>
+					<label for="control_level_name" class="block text-sm font-medium text-slate-300 mb-2">Label Name</label>
+				<input type="text" id="form_name" name="form_name" placeholder="e.g., labal" required
+					class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm transition"/>
+				</div>
+
+				<div>
+					<label for="control_type" class="block text-sm font-medium text-slate-300 mb-2">Component UI Type</label>
+					<select id="control_type" name="control_type" required
+						class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 text-sm transition">
+						<option value="text">Text Input</option>
+						<option value="number">Numeric Field</option>
+						<option value="select">Dropdown Menu</option>
+						<option value="checkbox">Checkbox Switch</option>
+						<option value="textarea">Text Area Block</option>
+					</select>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center pt-2">
+				<div>
+					<label for="sequence" class="block text-sm font-medium text-slate-300 mb-2">Display Sequence Order</label>
+					<input type="number" id="sequence" name="sequence" min="0" value="0" required
+						class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 text-sm transition"/>
+				</div>
+
+				<div class="flex items-center h-full mt-6">
+					<label class="relative inline-flex items-center cursor-pointer">
+						<input type="checkbox" id="is_mandatory" name="is_mandatory" value="true" class="sr-only peer"/>
+						<div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 peer-checked:after:bg-slate-100"></div>
+						<span class="ml-3 text-sm font-medium text-slate-300">Mandatory Input Field</span>
+					</label>
+				</div>
+			</div>
+
+			<div class="flex items-center justify-end gap-3 border-t border-slate-800 pt-6 mt-4">
+				<button type="button" class="px-4 py-2 border border-slate-700 text-slate-300 hover:bg-slate-900 rounded text-sm font-medium transition">
+					Cancel
+				</button>
+				<button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-sm font-medium transition shadow-sm">
+					Save Record
+				</button>
+			</div>
+		</form>
+	</div>
+}

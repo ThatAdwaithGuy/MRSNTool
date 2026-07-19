@@ -1,4 +1,4 @@
--- name: NewDesign :many
+-- name: NewDesign :one
 INSERT INTO design (
   form_name ,
   control_level_name ,

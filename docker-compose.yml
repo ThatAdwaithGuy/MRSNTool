@@ -1,0 +1,45 @@
+services:
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: local_postgres
+    environment:
+      POSTGRES_USER: adwaith
+      POSTGRES_PASSWORD: req3110
+      POSTGRES_DB: reqdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/migration:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adwaith -d reqdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  db_migrations:
+    image: ghcr.io/amacneil/dbmate:2
+    volumes:
+      - ./db/migrations:/db/migrations
+    environment:
+      # Pass the connection string to dbmate
+      - DATABASE_URL=postgres://adwaith:req3110@postgres_db:5432/reqdb?sslmode=disable
+    command: ["up"]
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+
+  web_app:
+    build: .
+    container_name: go_htmx_app
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - DB_CONTAINER_URL=postgres://adwaith:req3110@postgres_db:5432/reqdb?sslmode=disable
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

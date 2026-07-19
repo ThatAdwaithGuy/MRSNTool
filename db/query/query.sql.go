@@ -9,7 +9,7 @@ import (
 	"context"
 )
 
-const newDesign = `-- name: NewDesign :many
+const newDesign = `-- name: NewDesign :one
 INSERT INTO design (
   form_name ,
   control_level_name ,
@@ -34,36 +34,22 @@ type NewDesignParams struct {
 	Sequence         int32
 }
 
-func (q *Queries) NewDesign(ctx context.Context, arg NewDesignParams) ([]Design, error) {
-	rows, err := q.db.Query(
-		ctx, newDesign,
+func (q *Queries) NewDesign(ctx context.Context, arg NewDesignParams) (Design, error) {
+	row := q.db.QueryRow(ctx, newDesign,
 		arg.FormName,
 		arg.ControlLevelName,
 		arg.ControlType,
 		arg.IsMandatory,
 		arg.Sequence,
 	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Design
-	for rows.Next() {
-		var i Design
-		if err := rows.Scan(
-			&i.ID,
-			&i.FormName,
-			&i.ControlLevelName,
-			&i.ControlType,
-			&i.IsMandatory,
-			&i.Sequence,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+	var i Design
+	err := row.Scan(
+		&i.ID,
+		&i.FormName,
+		&i.ControlLevelName,
+		&i.ControlType,
+		&i.IsMandatory,
+		&i.Sequence,
+	)
+	return i, err
 }

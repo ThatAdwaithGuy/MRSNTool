@@ -1,0 +1,13 @@
+package views
+
+templ AlertMessage(isSuccess bool, message string) {
+    if isSuccess {
+        <div class="p-4 mb-4 text-sm text-green-400 bg-slate-900 border border-green-800 rounded-lg transition-all animate-fade-in">
+            <span class="font-medium">Success!</span> { message }
+        </div>
+    } else {
+        <div class="p-4 mb-4 text-sm text-red-400 bg-slate-900 border border-red-800 rounded-lg transition-all animate-fade-in">
+            <span class="font-medium">Error:</span> { message }
+        </div>
+    }
+}

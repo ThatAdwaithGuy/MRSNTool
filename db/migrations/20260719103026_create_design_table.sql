@@ -1,3 +1,4 @@
+-- migrate:up
 CREATE TABLE design (
     id SERIAL PRIMARY KEY,
     form_name VARCHAR NOT NULL,
@@ -6,3 +7,6 @@ CREATE TABLE design (
     is_mandatory BOOLEAN NOT NULL,
     sequence INT NOT NULL
 );
+
+-- migrate:down
+DROP TABLE IF EXISTS design;
