@@ -1,8 +1,8 @@
 -- name: NewDesign :one
 INSERT INTO design (
   form_name ,
-  control_level_name ,
-  control_type ,
+  label_name,
+  data_type,
   is_mandatory ,
   sequence 
 ) VALUES (
@@ -14,4 +14,14 @@ INSERT INTO design (
 )
 RETURNING *;
 
+-- name: GetDesignByFormName :many
+SELECT *
+FROM design
+WHERE form_name = $1
+ORDER BY sequence;
 
+
+-- name: GetAllFormNames :many
+SELECT DISTINCT form_name
+FROM design
+ORDER BY form_name;

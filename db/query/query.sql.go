@@ -9,11 +9,71 @@ import (
 	"context"
 )
 
+const getAllFormNames = `-- name: GetAllFormNames :many
+SELECT DISTINCT form_name
+FROM design
+ORDER BY form_name
+`
+
+func (q *Queries) GetAllFormNames(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, getAllFormNames)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var form_name string
+		if err := rows.Scan(&form_name); err != nil {
+			return nil, err
+		}
+		items = append(items, form_name)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDesignByFormName = `-- name: GetDesignByFormName :many
+SELECT id, form_name, label_name, data_type, is_mandatory, sequence
+FROM design
+WHERE form_name = $1
+ORDER BY sequence
+`
+
+func (q *Queries) GetDesignByFormName(ctx context.Context, formName string) ([]Design, error) {
+	rows, err := q.db.Query(ctx, getDesignByFormName, formName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Design
+	for rows.Next() {
+		var i Design
+		if err := rows.Scan(
+			&i.ID,
+			&i.FormName,
+			&i.LabelName,
+			&i.DataType,
+			&i.IsMandatory,
+			&i.Sequence,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const newDesign = `-- name: NewDesign :one
 INSERT INTO design (
   form_name ,
-  control_level_name ,
-  control_type ,
+  label_name,
+  data_type,
   is_mandatory ,
   sequence 
 ) VALUES (
@@ -23,22 +83,22 @@ INSERT INTO design (
   $4,
   $5
 )
-RETURNING id, form_name, control_level_name, control_type, is_mandatory, sequence
+RETURNING id, form_name, label_name, data_type, is_mandatory, sequence
 `
 
 type NewDesignParams struct {
-	FormName         string
-	ControlLevelName string
-	ControlType      string
-	IsMandatory      bool
-	Sequence         int32
+	FormName    string
+	LabelName   string
+	DataType    string
+	IsMandatory bool
+	Sequence    int32
 }
 
 func (q *Queries) NewDesign(ctx context.Context, arg NewDesignParams) (Design, error) {
 	row := q.db.QueryRow(ctx, newDesign,
 		arg.FormName,
-		arg.ControlLevelName,
-		arg.ControlType,
+		arg.LabelName,
+		arg.DataType,
 		arg.IsMandatory,
 		arg.Sequence,
 	)
@@ -46,8 +106,8 @@ func (q *Queries) NewDesign(ctx context.Context, arg NewDesignParams) (Design, e
 	err := row.Scan(
 		&i.ID,
 		&i.FormName,
-		&i.ControlLevelName,
-		&i.ControlType,
+		&i.LabelName,
+		&i.DataType,
 		&i.IsMandatory,
 		&i.Sequence,
 	)

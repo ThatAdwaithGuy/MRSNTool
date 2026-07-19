@@ -5,10 +5,14 @@
 package query
 
 type Design struct {
-	ID               int32
-	FormName         string
-	ControlLevelName string
-	ControlType      string
-	IsMandatory      bool
-	Sequence         int32
+	ID          int32
+	FormName    string
+	LabelName   string
+	DataType    string
+	IsMandatory bool
+	Sequence    int32
+}
+
+type SchemaMigration struct {
+	Version string
 }
