@@ -99,7 +99,7 @@ func (q *Query) GetFormEntries(ctx *gin.Context) {
 		return
 	}
 
-	fmt.Println("Entries of %s: %s", formName, designs)
+	fmt.Printf("Entries of %s: %s\n", formName, designs)
 
 	ctx.Header("Content-Type", "text/html; charset=utf-8")
 	if err := views.FormEntriesTable(designs).Render(ctx, ctx.Writer); err != nil {
@@ -124,4 +124,8 @@ func (q *Query) ViewDesigns(ctx *gin.Context) {
 	if err := views.FormsListPage(designs).Render(ctx, ctx.Writer); err != nil {
 		fmt.Println("Error: ", err)
 	}
+}
+
+func (q *Query) CreateForm(ctx *gin.Context) {
+	fmt.Println(ctx.PostForm("name"))
 }

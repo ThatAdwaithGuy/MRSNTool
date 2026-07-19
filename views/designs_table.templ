@@ -42,11 +42,22 @@ templ formNamesList(formNames []string) {
 								<span class="h-2 w-2 rounded-full bg-indigo-500"></span>
 								{ name }
 							</span>
-							<span class="text-slate-500 group-open:-rotate-180 transition-transform duration-200">
-								<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-								</svg>
-							</span>
+							
+							<div class="flex items-center gap-4">
+								<button
+									hx-post="/api/create_form"
+									hx-vals={ `{"name": "` + name + `"}` }
+									onclick="event.stopPropagation()"
+									class="inline-flex items-center justify-center px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-medium transition shadow-sm"
+								>
+									Add Form
+								</button>
+								<span class="text-slate-500 group-open:-rotate-180 transition-transform duration-200">
+									<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+									</svg>
+								</span>
+							</div>
 						</summary>
 						<div
 							class="bg-slate-900/40 border-t border-slate-800/50 p-4"
