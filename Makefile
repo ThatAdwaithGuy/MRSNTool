@@ -1,7 +1,15 @@
+migrate:
+	dbmate dump
+
+delete:
+	sudo docker compose down -v
+
+
+
 run:
 	templ generate
 	sqlc generate 
-	go run .
+	sudo docker compose up --build
 compile:
 	templ generate
 	sqlc generate 

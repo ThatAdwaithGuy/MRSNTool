@@ -4,13 +4,83 @@
 
 package query
 
+import (
+	"database/sql/driver"
+	"fmt"
+
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+type DataTypes string
+
+const (
+	DataTypesText     DataTypes = "text"
+	DataTypesNumber   DataTypes = "number"
+	DataTypesCheckbox DataTypes = "checkbox"
+	DataTypesTextarea DataTypes = "textarea"
+	DataTypesSelect   DataTypes = "select"
+)
+
+func (e *DataTypes) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = DataTypes(s)
+	case string:
+		*e = DataTypes(s)
+	default:
+		return fmt.Errorf("unsupported scan type for DataTypes: %T", src)
+	}
+	return nil
+}
+
+type NullDataTypes struct {
+	DataTypes DataTypes
+	Valid     bool // Valid is true if DataTypes is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullDataTypes) Scan(value interface{}) error {
+	if value == nil {
+		ns.DataTypes, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.DataTypes.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullDataTypes) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.DataTypes), nil
+}
+
+type Datum struct {
+	ID         int32
+	Data       []byte
+	DataType   DataTypes
+	DropdownID pgtype.Int4
+}
+
 type Design struct {
 	ID          int32
-	FormName    string
 	LabelName   string
-	DataType    string
+	DataType    DataTypes
 	IsMandatory bool
 	Sequence    int32
+	DropdownID  pgtype.Int4
+	FormID      int32
+}
+
+type Dropdown struct {
+	ID      int32
+	Options []string
+}
+
+type Form struct {
+	ID       int32
+	FormName string
 }
 
 type SchemaMigration struct {

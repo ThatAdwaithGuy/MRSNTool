@@ -13,7 +13,7 @@ templ designForm() {
 			<p class="text-xs text-slate-400 mt-1">Register dynamic UI parameters for system terminal forms.</p>
 		</div>
 		
-		<form hx-post="/designs" hx-target="#form-message" hx-swap="innerHTML" class="p-6 space-y-6">
+		<form hx-post="/api/post_designs" hx-target="#form-message" hx-swap="innerHTML" class="p-6 space-y-6">
 			<div id="form-message"></div>
 
 			<div>
@@ -25,7 +25,7 @@ templ designForm() {
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 				<div>
 					<label for="control_level_name" class="block text-sm font-medium text-slate-300 mb-2">Label Name</label>
-				<input type="text" id="form_name" name="form_name" placeholder="e.g., labal" required
+				<input type="text" id="control_level_name" name="control_level_name" placeholder="e.g., labal" required
 					class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm transition"/>
 				</div>
 

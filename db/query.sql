@@ -1,27 +1,70 @@
 -- name: NewDesign :one
-INSERT INTO design (
-  form_name ,
-  label_name,
-  data_type,
-  is_mandatory ,
-  sequence 
-) VALUES (
-  $1,
-  $2,
-  $3,
-  $4,
-  $5
+WITH target_form AS (
+  -- 1. Try to insert the form; if it already exists, do nothing but still grab the ID
+  INSERT INTO forms (form_name)
+  VALUES ($1)
+  ON CONFLICT (form_name) DO UPDATE 
+    SET form_name = EXCLUDED.form_name -- Trick to force returning the ID even on conflict
+  RETURNING id
+),
+inserted AS (
+  -- 2. Insert into the design table using the ID fetched from the first CTE
+  INSERT INTO design (
+    form_id, 
+    label_name,
+    data_type,
+    is_mandatory,
+    sequence 
+  ) VALUES (
+    (SELECT id FROM target_form),
+    $2,
+    $3::data_types, -- Cast explicitly if using the custom ENUM type
+    $4,
+    $5
+  )
+  RETURNING *
 )
-RETURNING *;
+-- 3. Return the final selection
+SELECT 
+  i.id, 
+  $1::VARCHAR AS form_name,
+  i.label_name, 
+  i.data_type, 
+  i.is_mandatory, 
+  i.sequence,
+  i.dropdown_id
+FROM inserted i;
 
 -- name: GetDesignByFormName :many
-SELECT *
-FROM design
-WHERE form_name = $1
-ORDER BY sequence;
-
+SELECT 
+  d.id, 
+  f.form_name, 
+  d.form_id,
+  d.label_name, 
+  d.data_type, 
+  d.is_mandatory, 
+  d.sequence,
+  d.dropdown_id
+FROM design d
+JOIN forms f ON d.form_id = f.id
+WHERE f.form_name = $1
+ORDER BY d.sequence;
 
 -- name: GetAllFormNames :many
-SELECT DISTINCT form_name
-FROM design
+SELECT form_name
+FROM forms
 ORDER BY form_name;
+
+-- name: ListAllDesigns :many
+SELECT 
+  d.id, 
+  f.form_name, 
+  d.form_id,
+  d.label_name, 
+  d.data_type, 
+  d.is_mandatory, 
+  d.sequence,
+  d.dropdown_id
+FROM design d
+JOIN forms f ON d.form_id = f.id
+ORDER BY f.form_name, d.sequence;

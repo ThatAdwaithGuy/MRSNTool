@@ -1,6 +1,6 @@
 services:
   postgres_db:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: local_postgres
     environment:
       POSTGRES_USER: adwaith
@@ -10,7 +10,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./db/migration:/docker-entrypoint-initdb.d/init.sql
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U adwaith -d reqdb"]
       interval: 5s

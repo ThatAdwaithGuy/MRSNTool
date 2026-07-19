@@ -7,11 +7,13 @@ package query
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const getAllFormNames = `-- name: GetAllFormNames :many
-SELECT DISTINCT form_name
-FROM design
+SELECT form_name
+FROM forms
 ORDER BY form_name
 `
 
@@ -36,28 +38,105 @@ func (q *Queries) GetAllFormNames(ctx context.Context) ([]string, error) {
 }
 
 const getDesignByFormName = `-- name: GetDesignByFormName :many
-SELECT id, form_name, label_name, data_type, is_mandatory, sequence
-FROM design
-WHERE form_name = $1
-ORDER BY sequence
+SELECT 
+  d.id, 
+  f.form_name, 
+  d.form_id,
+  d.label_name, 
+  d.data_type, 
+  d.is_mandatory, 
+  d.sequence,
+  d.dropdown_id
+FROM design d
+JOIN forms f ON d.form_id = f.id
+WHERE f.form_name = $1
+ORDER BY d.sequence
 `
 
-func (q *Queries) GetDesignByFormName(ctx context.Context, formName string) ([]Design, error) {
+type GetDesignByFormNameRow struct {
+	ID          int32
+	FormName    string
+	FormID      int32
+	LabelName   string
+	DataType    DataTypes
+	IsMandatory bool
+	Sequence    int32
+	DropdownID  pgtype.Int4
+}
+
+func (q *Queries) GetDesignByFormName(ctx context.Context, formName string) ([]GetDesignByFormNameRow, error) {
 	rows, err := q.db.Query(ctx, getDesignByFormName, formName)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Design
+	var items []GetDesignByFormNameRow
 	for rows.Next() {
-		var i Design
+		var i GetDesignByFormNameRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.FormName,
+			&i.FormID,
 			&i.LabelName,
 			&i.DataType,
 			&i.IsMandatory,
 			&i.Sequence,
+			&i.DropdownID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAllDesigns = `-- name: ListAllDesigns :many
+SELECT 
+  d.id, 
+  f.form_name, 
+  d.form_id,
+  d.label_name, 
+  d.data_type, 
+  d.is_mandatory, 
+  d.sequence,
+  d.dropdown_id
+FROM design d
+JOIN forms f ON d.form_id = f.id
+ORDER BY f.form_name, d.sequence
+`
+
+type ListAllDesignsRow struct {
+	ID          int32
+	FormName    string
+	FormID      int32
+	LabelName   string
+	DataType    DataTypes
+	IsMandatory bool
+	Sequence    int32
+	DropdownID  pgtype.Int4
+}
+
+func (q *Queries) ListAllDesigns(ctx context.Context) ([]ListAllDesignsRow, error) {
+	rows, err := q.db.Query(ctx, listAllDesigns)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAllDesignsRow
+	for rows.Next() {
+		var i ListAllDesignsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.FormName,
+			&i.FormID,
+			&i.LabelName,
+			&i.DataType,
+			&i.IsMandatory,
+			&i.Sequence,
+			&i.DropdownID,
 		); err != nil {
 			return nil, err
 		}
@@ -70,39 +149,70 @@ func (q *Queries) GetDesignByFormName(ctx context.Context, formName string) ([]D
 }
 
 const newDesign = `-- name: NewDesign :one
-INSERT INTO design (
-  form_name ,
-  label_name,
-  data_type,
-  is_mandatory ,
-  sequence 
-) VALUES (
-  $1,
-  $2,
-  $3,
-  $4,
-  $5
+WITH target_form AS (
+  -- 1. Try to insert the form; if it already exists, do nothing but still grab the ID
+  INSERT INTO forms (form_name)
+  VALUES ($1)
+  ON CONFLICT (form_name) DO UPDATE 
+    SET form_name = EXCLUDED.form_name -- Trick to force returning the ID even on conflict
+  RETURNING id
+),
+inserted AS (
+  -- 2. Insert into the design table using the ID fetched from the first CTE
+  INSERT INTO design (
+    form_id, 
+    label_name,
+    data_type,
+    is_mandatory,
+    sequence 
+  ) VALUES (
+    (SELECT id FROM target_form),
+    $2,
+    $3::data_types, -- Cast explicitly if using the custom ENUM type
+    $4,
+    $5
+  )
+  RETURNING id, label_name, data_type, is_mandatory, sequence, dropdown_id, form_id
 )
-RETURNING id, form_name, label_name, data_type, is_mandatory, sequence
+SELECT 
+  i.id, 
+  $1::VARCHAR AS form_name,
+  i.label_name, 
+  i.data_type, 
+  i.is_mandatory, 
+  i.sequence,
+  i.dropdown_id
+FROM inserted i
 `
 
 type NewDesignParams struct {
-	FormName    string
+	Column1     string
 	LabelName   string
-	DataType    string
+	Column3     DataTypes
 	IsMandatory bool
 	Sequence    int32
 }
 
-func (q *Queries) NewDesign(ctx context.Context, arg NewDesignParams) (Design, error) {
+type NewDesignRow struct {
+	ID          int32
+	FormName    string
+	LabelName   string
+	DataType    DataTypes
+	IsMandatory bool
+	Sequence    int32
+	DropdownID  pgtype.Int4
+}
+
+// 3. Return the final selection
+func (q *Queries) NewDesign(ctx context.Context, arg NewDesignParams) (NewDesignRow, error) {
 	row := q.db.QueryRow(ctx, newDesign,
-		arg.FormName,
+		arg.Column1,
 		arg.LabelName,
-		arg.DataType,
+		arg.Column3,
 		arg.IsMandatory,
 		arg.Sequence,
 	)
-	var i Design
+	var i NewDesignRow
 	err := row.Scan(
 		&i.ID,
 		&i.FormName,
@@ -110,6 +220,7 @@ func (q *Queries) NewDesign(ctx context.Context, arg NewDesignParams) (Design, e
 		&i.DataType,
 		&i.IsMandatory,
 		&i.Sequence,
+		&i.DropdownID,
 	)
 	return i, err
 }
