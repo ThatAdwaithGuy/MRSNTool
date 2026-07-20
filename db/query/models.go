@@ -79,8 +79,9 @@ type Dropdown struct {
 }
 
 type Form struct {
-	ID       int32
-	FormName string
+	ID        int32
+	FormName  string
+	Enterable pgtype.Bool
 }
 
 type SchemaMigration struct {
