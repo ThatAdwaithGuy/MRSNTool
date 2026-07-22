@@ -38,24 +38,80 @@ func (q *Queries) GetAllEnterableForms(ctx context.Context) ([]Form, error) {
 }
 
 const getAllFormNames = `-- name: GetAllFormNames :many
-SELECT form_name
-FROM forms
+SELECT f.id, f.form_name, f.enterable
+FROM forms f
 ORDER BY form_name
 `
 
-func (q *Queries) GetAllFormNames(ctx context.Context) ([]string, error) {
+func (q *Queries) GetAllFormNames(ctx context.Context) ([]Form, error) {
 	rows, err := q.db.Query(ctx, getAllFormNames)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []string
+	var items []Form
 	for rows.Next() {
-		var form_name string
-		if err := rows.Scan(&form_name); err != nil {
+		var i Form
+		if err := rows.Scan(&i.ID, &i.FormName, &i.Enterable); err != nil {
 			return nil, err
 		}
-		items = append(items, form_name)
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDesignByFormID = `-- name: GetDesignByFormID :many
+SELECT 
+  d.id, 
+  f.form_name, 
+  d.form_id,
+  d.label_name, 
+  d.data_type, 
+  d.is_mandatory, 
+  d.sequence,
+  d.dropdown_id
+FROM design d
+JOIN forms f ON d.form_id = f.id
+WHERE f.id = $1
+ORDER BY d.sequence
+`
+
+type GetDesignByFormIDRow struct {
+	ID          int32
+	FormName    string
+	FormID      int32
+	LabelName   string
+	DataType    DataTypes
+	IsMandatory bool
+	Sequence    int32
+	DropdownID  pgtype.Int4
+}
+
+func (q *Queries) GetDesignByFormID(ctx context.Context, id int32) ([]GetDesignByFormIDRow, error) {
+	rows, err := q.db.Query(ctx, getDesignByFormID, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetDesignByFormIDRow
+	for rows.Next() {
+		var i GetDesignByFormIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.FormName,
+			&i.FormID,
+			&i.LabelName,
+			&i.DataType,
+			&i.IsMandatory,
+			&i.Sequence,
+			&i.DropdownID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -251,16 +307,13 @@ func (q *Queries) NewDesign(ctx context.Context, arg NewDesignParams) (NewDesign
 	return i, err
 }
 
-const setFormEnterable = `-- name: SetFormEnterable :one
-UPDATE forms
+const setFormEnterable = `-- name: SetFormEnterable :exec
+UPDATE forms 
 SET enterable = true
-WHERE id = $1
-RETURNING id, form_name, enterable
+WHERE form_name = $1
 `
 
-func (q *Queries) SetFormEnterable(ctx context.Context, id int32) (Form, error) {
-	row := q.db.QueryRow(ctx, setFormEnterable, id)
-	var i Form
-	err := row.Scan(&i.ID, &i.FormName, &i.Enterable)
-	return i, err
+func (q *Queries) SetFormEnterable(ctx context.Context, formName string) error {
+	_, err := q.db.Exec(ctx, setFormEnterable, formName)
+	return err
 }

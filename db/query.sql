@@ -50,9 +50,24 @@ JOIN forms f ON d.form_id = f.id
 WHERE f.form_name = $1
 ORDER BY d.sequence;
 
+-- name: GetDesignByFormID :many
+SELECT 
+  d.id, 
+  f.form_name, 
+  d.form_id,
+  d.label_name, 
+  d.data_type, 
+  d.is_mandatory, 
+  d.sequence,
+  d.dropdown_id
+FROM design d
+JOIN forms f ON d.form_id = f.id
+WHERE f.id = $1
+ORDER BY d.sequence;
+
 -- name: GetAllFormNames :many
-SELECT form_name
-FROM forms
+SELECT f.id, f.form_name, f.enterable
+FROM forms f
 ORDER BY form_name;
 
 -- name: ListAllDesigns :many
@@ -69,11 +84,10 @@ FROM design d
 JOIN forms f ON d.form_id = f.id
 ORDER BY f.form_name, d.sequence;
 
--- name: SetFormEnterable :one 
-UPDATE forms
+-- name: SetFormEnterable :exec
+UPDATE forms 
 SET enterable = true
-WHERE id = $1
-RETURNING *;
+WHERE form_name = $1;
 
 -- name: GetAllEnterableForms :many
 SELECT f.id, f.form_name, f.enterable

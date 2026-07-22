@@ -4,9 +4,11 @@ migrate:
 delete:
 	sudo docker compose down -v
 
+.PHONY: vet
+vet:
+	go vet ./...
 
-
-run:
+run: vet
 	templ generate
 	sqlc generate 
 	sudo docker compose up --build

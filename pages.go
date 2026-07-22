@@ -32,15 +32,15 @@ func (q *Query) PostDesigns(ctx *gin.Context) {
 	var controlType query.DataTypes = ""
 	switch ctx.PostForm("control_type") {
 	case "text":
-		controlType = query.DataTypesText     
+		controlType = query.DataTypesText
 	case "number":
-		controlType = query.DataTypesNumber   
+		controlType = query.DataTypesNumber
 	case "checkbox":
-		controlType = query.DataTypesCheckbox 
+		controlType = query.DataTypesCheckbox
 	case "textarea":
-		controlType = query.DataTypesTextarea 
+		controlType = query.DataTypesTextarea
 	case "select":
-		controlType = query.DataTypesSelect   
+		controlType = query.DataTypesSelect
 	}
 
 	sequence, err := strconv.Atoi(ctx.PostForm("sequence"))
@@ -59,7 +59,7 @@ func (q *Query) PostDesigns(ctx *gin.Context) {
 	params := query.NewDesignParams{
 		Column1:     formName,
 		LabelName:   controlLevel,
-		Column3:    controlType,
+		Column3:     controlType,
 		IsMandatory: isMandatory,
 		Sequence:    int32(sequence),
 	}
@@ -99,7 +99,7 @@ func (q *Query) GetFormEntries(ctx *gin.Context) {
 		return
 	}
 
-	fmt.Printf("Entries of %s: %s\n", formName, designs)
+	fmt.Printf("Entries of %s: %+v\n", formName, designs)
 
 	ctx.Header("Content-Type", "text/html; charset=utf-8")
 	if err := views.FormEntriesTable(designs).Render(ctx, ctx.Writer); err != nil {
@@ -127,13 +127,43 @@ func (q *Query) ViewDesigns(ctx *gin.Context) {
 }
 
 type JsonForms struct {
-	ID        int32 `json:"id"`
+	ID        int32  `json:"id"`
 	FormName  string `json:"form_name"`
-	Enterable bool `json:"enterable"`
+	Enterable bool   `json:"enterable"`
 }
 
 func (q *Query) GetEnterableForms(ctx *gin.Context) {
 	designs, err := q.query.GetAllEnterableForms(ctx.Request.Context())
+	if err != nil {
+		err_msg := fmt.Sprintf("error while querying enterable forms: %s", err)
+		str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(false, err_msg))
+		if err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.String(http.StatusInternalServerError, str)
+		return
+	}
+
+	var json_forms []JsonForms
+	for _, form := range designs {
+		json_forms = append(json_forms, JsonForms{
+			ID:       form.ID,
+			FormName: form.FormName,
+			// TODO:  Bool could be invalid so add a check for it.
+			Enterable: form.Enterable.Bool,
+		})
+	}
+
+	fmt.Println("json forms: ", json_forms)
+
+	ctx.JSON(http.StatusOK, json_forms)
+}
+
+func (q *Query) MakeFormEnterable(ctx *gin.Context) {
+	name := ctx.PostForm("name")
+	fmt.Printf("Made %s enterable\n", name)
+	err := q.query.SetFormEnterable(ctx.Request.Context(), name)
 	if err != nil {
 		err_msg := fmt.Sprintf("error while getting enterable forms: %s", err)
 		str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(false, err_msg))
@@ -144,19 +174,42 @@ func (q *Query) GetEnterableForms(ctx *gin.Context) {
 		ctx.String(http.StatusInternalServerError, str)
 		return
 	}
-	
-	var json_forms []JsonForms
-	for _, form := range designs {
-		json_forms = append(json_forms, JsonForms{
-			ID: form.ID,
-			FormName: form.FormName,
-			// TODO:  Bool could be invalid so add a check for it.
-			Enterable: form.Enterable.Bool,
-		})
+
+	if err := views.FormButton("", true).Render(ctx, ctx.Writer); err != nil {
+		err_msg := fmt.Sprintf("error while rendering button: %s", err)
+		str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(false, err_msg))
+		if err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.String(http.StatusInternalServerError, str)
+		return
 	}
 
-	fmt.Println("json forms: ", json_forms)
+	ctx.Status(http.StatusOK)
+}
 
+func (q *Query) FormsPage(ctx *gin.Context) {
+	forms, err := q.query.GetAllEnterableForms(ctx.Request.Context())
+	if err != nil {
+		err_msg := fmt.Sprintf("error while qurrying enterable forms: %s", err)
+		str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(false, err_msg))
+		if err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.String(http.StatusInternalServerError, str)
+		return
+	}
 
-	ctx.JSON(http.StatusOK, json_forms)	
+	if err := views.FormsGridPage(forms); err != nil {
+		fmt.Println(err)
+		err_msg := fmt.Sprintf("error while rendering forms grid page: %s", err)
+		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer);err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
 }

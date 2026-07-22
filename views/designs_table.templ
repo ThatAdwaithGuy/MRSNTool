@@ -3,15 +3,16 @@ package views
 import (
 	"github.com/ThatAdwaithGuy/req/db/query"
 	"strconv"
+  "fmt"
 )
 
 // View wrapper rendering the forms list inside the CRM Layout
-templ FormsListPage(formNames []string) {
+templ FormsListPage(formNames []query.Form) {
 	@Layout("CRM Terminal - Form Configurations", formNamesList(formNames))
 }
 
 // Interactive accordion list for unique form names
-templ formNamesList(formNames []string) {
+templ formNamesList(formNames []query.Form) {
 	<div class="max-w-4xl mx-auto bg-slate-950 border border-slate-800 rounded-lg overflow-hidden shadow-xl">
 		<div class="px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 			<div>
@@ -33,25 +34,18 @@ templ formNamesList(formNames []string) {
 					No forms found. Click "+ Add Form" to create your first one.
 				</div>
 			} else {
-				for _, name := range formNames {
+				for _, form := range formNames {
 					<details class="group [&_summary::-webkit-details-marker]:hidden">
 						<summary
 							class="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-slate-900/30 transition text-sm text-slate-200 font-medium tracking-wide"
 						>
 							<span class="flex items-center gap-3">
 								<span class="h-2 w-2 rounded-full bg-indigo-500"></span>
-								{ name }
+								{ form.FormName }
 							</span>
 							
 							<div class="flex items-center gap-4">
-								<button
-									hx-post="/api/make_form_enterable"
-									hx-vals={ `{"name": "` + name + `"}` }
-									onclick="event.stopPropagation()"
-									class="inline-flex items-center justify-center px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-medium transition shadow-sm"
-								>
-									Add Form
-								</button>
+                @FormButton(form.FormName, form.Enterable.Bool)
 								<span class="text-slate-500 group-open:-rotate-180 transition-transform duration-200">
 									<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -61,12 +55,12 @@ templ formNamesList(formNames []string) {
 						</summary>
 						<div
 							class="bg-slate-900/40 border-t border-slate-800/50 p-4"
-							hx-get={ "/api/get_form_designs?form=" + name }
+							hx-get={ "/api/get_form_designs?form=" + form.FormName }
 							hx-trigger="click from:closest details once"
 							hx-swap="innerHTML"
 						>
 							<div class="text-center py-6 text-sm text-slate-500 animate-pulse">
-								Loading configuration fields for { name }...
+								Loading configuration fields for { form.FormName }...
 							</div>
 						</div>
 					</details>
@@ -126,4 +120,37 @@ templ FormEntriesTable(designs []query.GetDesignByFormNameRow) {
 			</tbody>
 		</table>
 	}
+}
+
+templ FormButton(name string, isEntered bool) {
+	if isEntered {
+		<button
+			disabled
+			onclick="event.stoppropagation()"
+			class="inline-flex items-center justify-center px-3 py-1 bg-gray-400 text-white rounded text-xs font-medium cursor-not-allowed opacity-60 shadow-none"
+		>
+			Add Form
+		</button>
+	} else {
+		<button
+			hx-post="/api/make_form_enterable"
+			hx-vals={ fmt.Sprintf(`{"name": "%s"}`, name) }
+			hx-target="this"
+			hx-swap="outerHTML"
+			onclick="event.stopPropagation()"
+			class="inline-flex items-center justify-center px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-medium transition shadow-sm"
+		>
+			Add Form
+		</button>
+	}
+}
+
+templ FormButtonLoader(name string) {
+	<div
+		hx-get={ fmt.Sprintf("/api/is_entered?name=%s", name) }
+		hx-trigger="load"
+		hx-swap="outerHTML"
+	>
+		@FormButton(name, false)
+	</div>
 }
