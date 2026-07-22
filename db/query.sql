@@ -1,30 +1,29 @@
 -- name: NewDesign :one
 WITH target_form AS (
-  -- 1. Try to insert the form; if it already exists, do nothing but still grab the ID
   INSERT INTO forms (form_name)
   VALUES ($1)
   ON CONFLICT (form_name) DO UPDATE 
-    SET form_name = EXCLUDED.form_name -- Trick to force returning the ID even on conflict
+    SET form_name = EXCLUDED.form_name 
   RETURNING id
 ),
 inserted AS (
-  -- 2. Insert into the design table using the ID fetched from the first CTE
   INSERT INTO design (
     form_id, 
     label_name,
     data_type,
     is_mandatory,
-    sequence 
+    sequence, 
+    dropdown_id
   ) VALUES (
     (SELECT id FROM target_form),
     $2,
-    $3::data_types, -- Cast explicitly if using the custom ENUM type
+    $3::data_types, 
     $4,
-    $5
+    $5,
+    $6
   )
   RETURNING *
 )
--- 3. Return the final selection
 SELECT 
   i.id, 
   $1::VARCHAR AS form_name,
@@ -94,3 +93,10 @@ SELECT f.id, f.form_name, f.enterable
 FROM forms f
 WHERE f.enterable = true;
 
+-- name: NewDropDown :one
+INSERT INTO dropdown (
+  options
+) VALUES (
+  $1
+) 
+RETURNING *;

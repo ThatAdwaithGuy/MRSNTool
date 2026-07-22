@@ -1,0 +1,172 @@
+package views
+
+import (
+  "fmt"
+
+	"github.com/ThatAdwaithGuy/req/db/query"
+)
+
+// DataTypes enumerates the supported field input types.
+type DataTypes string
+
+
+// field is the record collected for every box that gets rendered.
+type field struct {
+	LabelName string
+	DataType query.DataTypes 
+}
+
+// track appends to the caller-owned slice and renders nothing.
+// templ's `{ expr }` syntax only accepts expressions that produce a string,
+// so this is the idiomatic way to get a side effect (the append) to run
+// inline as each box is rendered, in the order the boxes appear on the page.
+// If you'd rather keep templates side-effect-free, do the same append in the
+// HTTP handler that receives the "add field" request instead of here.
+func track(fields *[]field, name string, dt query.DataTypes) string {
+	*fields = append(*fields, field{LabelName: name, DataType: dt})
+	return ""
+}
+
+// FieldScript holds the shared client-side validation logic used by every
+// box below. Include it ONCE per page (e.g. in Layout or at the bottom of
+// the page that hosts these boxes) — not once per box.
+templ FieldScript() {
+	<script>
+		function reqValidate(el) {
+			const box = el.closest("[data-field-box]");
+			const err = box.querySelector("[data-error]");
+			const mandatory = box.dataset.mandatory === "true";
+			const empty = el.type === "checkbox" ? !el.checked : el.value.trim() === "";
+			const invalid = mandatory && empty;
+			err.classList.toggle("hidden", !invalid);
+			el.classList.toggle("border-red-500", invalid);
+			el.classList.toggle("border-slate-700", !invalid);
+			return !invalid;
+		}
+	</script>
+}
+
+// box wraps every field type in a consistent card, matching the rest of the UI.
+templ box(name string, mandatory bool, input templ.Component) {
+	<div
+		data-field-box
+		data-mandatory={ fmt.Sprintf("%t", mandatory) }
+		class="rounded-lg border border-slate-800 bg-slate-950 p-4 shadow-sm"
+	>
+		<label class="flex items-center gap-1 text-sm font-medium text-slate-300 mb-2">
+			{ name }
+			if mandatory {
+				<span class="text-amber-400">*</span>
+			}
+		</label>
+		@input
+		<p data-error class="hidden text-xs text-red-400 mt-1.5">
+			This field is required.
+		</p>
+	</div>
+}
+
+// TextFieldBox renders a single-line text input.
+templ TextFieldBox(name string, mandatory bool, fields *[]field) {
+	{ track(fields, name, query.DataTypesText) }
+	@box(name, mandatory, textInput(name, mandatory))
+}
+
+templ textInput(name string, mandatory bool) {
+	<input
+		type="text"
+		name={ name }
+		if mandatory {
+			required
+		}
+		onblur="reqValidate(this)"
+		oninput="reqValidate(this)"
+		class="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition"
+		placeholder={ "Enter " + name }
+	/>
+}
+
+// NumberFieldBox renders a numeric input.
+templ NumberFieldBox(name string, mandatory bool, fields *[]field) {
+	{ track(fields, name, query.DataTypesNumber) }
+	@box(name, mandatory, numberInput(name, mandatory))
+}
+
+templ numberInput(name string, mandatory bool) {
+	<input
+		type="number"
+		name={ name }
+		if mandatory {
+			required
+		}
+		onblur="reqValidate(this)"
+		oninput="reqValidate(this)"
+		class="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 font-mono focus:outline-none focus:border-indigo-500 transition"
+		placeholder="0"
+	/>
+}
+
+// CheckboxFieldBox renders a single checkbox.
+templ CheckboxFieldBox(name string, mandatory bool, fields *[]field) {
+	{ track(fields, name, query.DataTypesCheckbox) }
+	@box(name, mandatory, checkboxInput(name, mandatory))
+}
+
+templ checkboxInput(name string, mandatory bool) {
+	<div class="flex items-center gap-2">
+		<input
+			type="checkbox"
+			name={ name }
+			if mandatory {
+				required
+			}
+			onblur="reqValidate(this)"
+			onchange="reqValidate(this)"
+			class="h-4 w-4 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500"
+		/>
+		<span class="text-xs text-slate-500">Check to confirm</span>
+	</div>
+}
+
+// TextareaFieldBox renders a multi-line text input.
+templ TextareaFieldBox(name string, mandatory bool, fields *[]field) {
+	{ track(fields, name, query.DataTypesTextarea) }
+	@box(name, mandatory, textareaInput(name, mandatory))
+}
+
+templ textareaInput(name string, mandatory bool) {
+	<textarea
+		name={ name }
+		if mandatory {
+			required
+		}
+		onblur="reqValidate(this)"
+		oninput="reqValidate(this)"
+		rows="3"
+		class="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition resize-y"
+		placeholder={ "Enter " + name }
+	></textarea>
+}
+
+// SelectFieldBox renders a dropdown whose options are fetched from the backend.
+templ SelectFieldBox(name string, mandatory bool, fields *[]field) {
+	{ track(fields, name, query.DataTypesSelect) }
+	@box(name, mandatory, selectInput(name, mandatory))
+}
+
+templ selectInput(name string, mandatory bool) {
+	<select
+		name={ name }
+		if mandatory {
+			required
+		}
+		onblur="reqValidate(this)"
+		onchange="reqValidate(this)"
+		hx-get={ fmt.Sprintf("/api/get_select_options?field=%s", name) }
+		hx-trigger="revealed"
+		hx-swap="beforeend"
+		class="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition"
+	>
+		<option value="" disabled selected>Loading options...</option>
+	</select>
+}

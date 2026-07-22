@@ -1,0 +1,11 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+# Generate templ files before compiling Go app
+cmd = "templ generate && go build -o ./tmp/main ."
+bin = "tmp/main"
+full_bin = "./tmp/main"
+include_ext = ["go", "templ", "html"]
+exclude_dir = ["assets", "tmp", "vendor"]
+delay = 1000 # ms delay to prevent spamming builds

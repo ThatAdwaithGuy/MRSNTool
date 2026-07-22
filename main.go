@@ -61,6 +61,7 @@ func main() {
 	r.GET("/create_form", CreateDesignForm)
 	r.GET("/view_designs", query.ViewDesigns)
 	r.GET("/forms", query.FormsPage)
+	r.GET("/enter_form/:id", query.EnterForm)
 
 	r.POST("/api/post_designs", query.PostDesigns)
 	r.GET("/api/get_form_designs", query.GetFormEntries)

@@ -2,9 +2,15 @@ package views
 
 import (
 	"fmt"
+  "strings"
+  "strconv"
 
 	"github.com/ThatAdwaithGuy/req/db/query"
 )
+
+func slugify(s string) string {
+    return strings.ToLower(strings.ReplaceAll(strings.TrimSpace(s), " ", "-"))
+}
 
 templ FormsGridPage(forms []query.Form) {
 	@Layout("CRM Terminal - Forms", formsGrid(forms))
@@ -41,7 +47,7 @@ templ formsGrid(forms []query.Form) {
 // A single clickable card for a form; loads field/row counts via htmx once visible
 templ FormCard(form query.Form) {
 	<a
-		href={ templ.URL("/enter_forms/" + form.FormName) }
+		href={ templ.URL("/enter_form/" + strconv.FormatInt(int64( form.ID ), 10)) }
 		class="group block rounded-xl border border-slate-800 bg-slate-950 hover:border-indigo-500/50 hover:bg-slate-900/60 transition p-5 shadow-lg hover:shadow-indigo-900/20"
 	>
 		<div class="flex items-start justify-between mb-4">

@@ -1,0 +1,18 @@
+package views
+
+import "github.com/ThatAdwaithGuy/req/db/query"
+type Fields struct {
+	FieldName string
+	DataType query.DataTypes
+	Requried bool
+}
+
+templ EnterFormPage(fields []Fields) {
+    @Layout("CRM Terminal - New Design Entry", enterForm(fields))
+}
+
+templ enterForm(fields []fields) {
+  {
+    
+  }
+}

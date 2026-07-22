@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/ThatAdwaithGuy/req/db/query"
 	"github.com/ThatAdwaithGuy/req/views"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func Index(ctx *gin.Context) {
@@ -29,6 +31,7 @@ func (q *Query) PostDesigns(ctx *gin.Context) {
 
 	formName := ctx.PostForm("form_name")
 	controlLevel := ctx.PostForm("control_level_name")
+
 	var controlType query.DataTypes = ""
 	switch ctx.PostForm("control_type") {
 	case "text":
@@ -53,15 +56,40 @@ func (q *Query) PostDesigns(ctx *gin.Context) {
 		}
 		ctx.String(http.StatusInternalServerError, str)
 		return
-
 	}
 	isMandatory := ctx.PostForm("is_mandatory") == "true"
+
+	dropdown_id := pgtype.Int4{
+		Int32: 0,
+		Valid: false,
+	}
+
+	// DatatypeSelect is dropdown box
+	if controlType == query.DataTypesSelect {
+		options_string := ctx.PostForm("dropdown_options")
+		options := strings.Split(options_string, ",")
+		dropdown, err := q.query.NewDropDown(ctx.Request.Context(), options)
+		if err != nil {
+			err_msg := fmt.Sprintf("Error while inserting new dropdown box values: %s", err)
+			str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(false, err_msg))
+			if err != nil {
+				fmt.Printf("error while rendering error message for %s\n", err_msg)
+				return
+			}
+			ctx.String(http.StatusInternalServerError, str)
+			return
+		}
+		dropdown_id.Int32 = dropdown.ID
+		dropdown_id.Valid = true
+	}
+
 	params := query.NewDesignParams{
 		Column1:     formName,
 		LabelName:   controlLevel,
 		Column3:     controlType,
 		IsMandatory: isMandatory,
 		Sequence:    int32(sequence),
+		DropdownID:  dropdown_id,
 	}
 	design, err := q.query.NewDesign(ctx.Request.Context(), params)
 	if err != nil {
@@ -201,15 +229,20 @@ func (q *Query) FormsPage(ctx *gin.Context) {
 		ctx.String(http.StatusInternalServerError, str)
 		return
 	}
+	fmt.Println(forms)
 
-	if err := views.FormsGridPage(forms); err != nil {
+	if err := views.FormsGridPage(forms).Render(ctx, ctx.Writer); err != nil {
 		fmt.Println(err)
 		err_msg := fmt.Sprintf("error while rendering forms grid page: %s", err)
-		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer);err != nil {
+		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer); err != nil {
 			fmt.Printf("error while rendering error message for %s\n", err_msg)
 			return
 		}
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}
+}
+
+
+func (q *Query) EnterForm(ctx *gin.Context) {
 }

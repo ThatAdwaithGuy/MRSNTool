@@ -25,7 +25,6 @@ CREATE TABLE data (
 ALTER TABLE design 
 ADD COLUMN form_id INT;
 
--- Note: If running on live data, ensure this column is filled before setting NOT NULL
 ALTER TABLE design 
 ALTER COLUMN form_id SET NOT NULL;
 
