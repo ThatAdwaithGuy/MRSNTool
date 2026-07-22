@@ -76,9 +76,7 @@ WHERE id = $1
 RETURNING *;
 
 -- name: GetAllEnterableForms :many
-SELECT f.id, f.form_name, f.enterable 
-FROM forms f 
-WHERE f.enterable = true 
-;
-
+SELECT f.id, f.form_name, f.enterable
+FROM forms f
+WHERE f.enterable = true;
 

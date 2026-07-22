@@ -45,7 +45,7 @@ templ formNamesList(formNames []string) {
 							
 							<div class="flex items-center gap-4">
 								<button
-									hx-post="/api/create_form"
+									hx-post="/api/make_form_enterable"
 									hx-vals={ `{"name": "` + name + `"}` }
 									onclick="event.stopPropagation()"
 									class="inline-flex items-center justify-center px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-medium transition shadow-sm"

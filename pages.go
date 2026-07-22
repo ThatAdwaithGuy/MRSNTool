@@ -125,3 +125,38 @@ func (q *Query) ViewDesigns(ctx *gin.Context) {
 		fmt.Println("Error: ", err)
 	}
 }
+
+type JsonForms struct {
+	ID        int32 `json:"id"`
+	FormName  string `json:"form_name"`
+	Enterable bool `json:"enterable"`
+}
+
+func (q *Query) GetEnterableForms(ctx *gin.Context) {
+	designs, err := q.query.GetAllEnterableForms(ctx.Request.Context())
+	if err != nil {
+		err_msg := fmt.Sprintf("error while getting enterable forms: %s", err)
+		str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(false, err_msg))
+		if err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.String(http.StatusInternalServerError, str)
+		return
+	}
+	
+	var json_forms []JsonForms
+	for _, form := range designs {
+		json_forms = append(json_forms, JsonForms{
+			ID: form.ID,
+			FormName: form.FormName,
+			// TODO:  Bool could be invalid so add a check for it.
+			Enterable: form.Enterable.Bool,
+		})
+	}
+
+	fmt.Println("json forms: ", json_forms)
+
+
+	ctx.JSON(http.StatusOK, json_forms)	
+}

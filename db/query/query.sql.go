@@ -12,8 +12,8 @@ import (
 )
 
 const getAllEnterableForms = `-- name: GetAllEnterableForms :many
-SELECT f.id, f.form_name, f.enterable 
-FROM forms f 
+SELECT f.id, f.form_name, f.enterable
+FROM forms f
 WHERE f.enterable = true
 `
 

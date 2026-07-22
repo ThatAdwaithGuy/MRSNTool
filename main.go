@@ -61,7 +61,9 @@ func main() {
 	r.GET("/create_form", CreateDesignForm)
 	r.POST("/api/post_designs", query.PostDesigns)
 	r.GET("/api/get_form_designs", query.GetFormEntries)
+	r.GET("/api/get_enterable_forms", query.GetEnterableForms)
 	r.GET("/view_designs", query.ViewDesigns)
+	
 
 	if err := r.Run(); err != nil {
 		fmt.Println(err)
