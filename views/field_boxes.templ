@@ -11,9 +11,10 @@ type DataTypes string
 
 
 // field is the record collected for every box that gets rendered.
-type field struct {
-	LabelName string
-	DataType query.DataTypes 
+type Field struct {
+	LabelName string `json:"label_name"`
+	DataType query.DataTypes `json:"data_type"`
+  Required bool `json:"required"`
 }
 
 // track appends to the caller-owned slice and renders nothing.
@@ -22,8 +23,8 @@ type field struct {
 // inline as each box is rendered, in the order the boxes appear on the page.
 // If you'd rather keep templates side-effect-free, do the same append in the
 // HTTP handler that receives the "add field" request instead of here.
-func track(fields *[]field, name string, dt query.DataTypes) string {
-	*fields = append(*fields, field{LabelName: name, DataType: dt})
+func track(fields *[]Field, name string, dt query.DataTypes) string {
+	*fields = append(*fields, Field{LabelName: name, DataType: dt})
 	return ""
 }
 
@@ -67,8 +68,7 @@ templ box(name string, mandatory bool, input templ.Component) {
 }
 
 // TextFieldBox renders a single-line text input.
-templ TextFieldBox(name string, mandatory bool, fields *[]field) {
-	{ track(fields, name, query.DataTypesText) }
+templ TextFieldBox(name string, mandatory bool, fields *[]Field) {
 	@box(name, mandatory, textInput(name, mandatory))
 }
 
@@ -87,7 +87,7 @@ templ textInput(name string, mandatory bool) {
 }
 
 // NumberFieldBox renders a numeric input.
-templ NumberFieldBox(name string, mandatory bool, fields *[]field) {
+templ NumberFieldBox(name string, mandatory bool, fields *[]Field) {
 	{ track(fields, name, query.DataTypesNumber) }
 	@box(name, mandatory, numberInput(name, mandatory))
 }
@@ -107,7 +107,7 @@ templ numberInput(name string, mandatory bool) {
 }
 
 // CheckboxFieldBox renders a single checkbox.
-templ CheckboxFieldBox(name string, mandatory bool, fields *[]field) {
+templ CheckboxFieldBox(name string, mandatory bool, fields *[]Field) {
 	{ track(fields, name, query.DataTypesCheckbox) }
 	@box(name, mandatory, checkboxInput(name, mandatory))
 }
@@ -129,7 +129,7 @@ templ checkboxInput(name string, mandatory bool) {
 }
 
 // TextareaFieldBox renders a multi-line text input.
-templ TextareaFieldBox(name string, mandatory bool, fields *[]field) {
+templ TextareaFieldBox(name string, mandatory bool, fields *[]Field) {
 	{ track(fields, name, query.DataTypesTextarea) }
 	@box(name, mandatory, textareaInput(name, mandatory))
 }
@@ -149,7 +149,7 @@ templ textareaInput(name string, mandatory bool) {
 }
 
 // SelectFieldBox renders a dropdown whose options are fetched from the backend.
-templ SelectFieldBox(name string, mandatory bool, fields *[]field) {
+templ SelectFieldBox(name string, mandatory bool, fields *[]Field) {
 	{ track(fields, name, query.DataTypesSelect) }
 	@box(name, mandatory, selectInput(name, mandatory))
 }

@@ -100,3 +100,9 @@ INSERT INTO dropdown (
   $1
 ) 
 RETURNING *;
+
+
+-- name: GetFormNameFromID :one
+SELECT form_name
+FROM forms 
+WHERE id = $1;

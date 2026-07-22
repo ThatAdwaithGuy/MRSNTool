@@ -1,18 +1,55 @@
 package views
 
-import "github.com/ThatAdwaithGuy/req/db/query"
-type Fields struct {
-	FieldName string
-	DataType query.DataTypes
-	Requried bool
+import (
+  "github.com/ThatAdwaithGuy/req/db/query" 
+  "strconv"
+)
+
+templ EnterFormPage(fields []Field, formName string, formID int32) {
+	@Layout("CRM Terminal - New Design Entry", enterForm(fields, formName, formID))
 }
 
-templ EnterFormPage(fields []Fields) {
-    @Layout("CRM Terminal - New Design Entry", enterForm(fields))
-}
-
-templ enterForm(fields []fields) {
-  {
-    
-  }
+templ enterForm(fields []Field, formName string, formID int32) {
+	<div class="max-w-2xl mx-auto space-y-6">
+		<div class="rounded-lg border border-slate-800 bg-slate-950 p-6 shadow-xl">
+			<div class="flex items-center justify-between">
+				<div>
+					<span
+						class="inline-block px-2.5 py-0.5 rounded text-xs font-semibold bg-indigo-950 text-indigo-400 border border-indigo-800/50 mb-2"
+					>
+						Active Dynamic Form
+					</span>
+					<h2 class="text-2xl font-bold tracking-tight text-slate-100">{ formName }</h2>
+					<p class="text-xs text-slate-400 mt-1">
+						Please fill out all required fields below to complete your submission.
+					</p>
+				</div>
+			</div>
+		</div>
+		<form class="space-y-4">
+			for _, field := range fields {
+				switch field.DataType {
+					case query.DataTypesText:
+						@TextFieldBox(field.LabelName, field.Required, &fields)
+					case query.DataTypesNumber:
+						@NumberFieldBox(field.LabelName, field.Required, &fields)
+					case query.DataTypesCheckbox:
+						@CheckboxFieldBox(field.LabelName, field.Required, &fields)
+					case query.DataTypesTextarea:
+						@TextareaFieldBox(field.LabelName, field.Required, &fields)
+					case query.DataTypesSelect:
+						@SelectFieldBox(field.LabelName, field.Required, &fields)
+				}
+			}
+			<div class="flex justify-end pt-2">
+				<button
+					hx-post={ templ.URL("/api/new_form_entry/" + strconv.FormatInt( int64( formID ),10 )) }
+					type="submit"
+					class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition shadow-sm"
+				>
+					Submit Form
+				</button>
+			</div>
+		</form>
+	</div>
 }

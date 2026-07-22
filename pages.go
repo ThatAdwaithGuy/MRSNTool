@@ -243,6 +243,60 @@ func (q *Query) FormsPage(ctx *gin.Context) {
 	}
 }
 
-
 func (q *Query) EnterForm(ctx *gin.Context) {
+	formIDstr := ctx.Param("id")
+	formID,err := strconv.Atoi(formIDstr)	
+	if err != nil {
+		err_msg := fmt.Sprintf("formID is not a number: %s", err)
+		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer); err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+	rows, err := q.query.GetDesignByFormID(ctx.Request.Context(), int32( formID ))
+	if err != nil {
+		err_msg := fmt.Sprintf("Error while accessing rows: %s", err)
+		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer); err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+	form_name, err := q.query.GetFormNameFromID(ctx.Request.Context(), int32( formID ))
+	if err != nil {
+		err_msg := fmt.Sprintf("Error while accessing form_name: %s", err)
+		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer); err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+
+	fields := []views.Field{}
+	for _, row := range rows {
+		fields = append(fields, views.Field{
+			LabelName: row.LabelName,
+			DataType: row.DataType,
+			Required: row.IsMandatory,
+		})
+	}
+	fmt.Println(fields)
+
+	if err := views.EnterFormPage(fields, form_name).Render(ctx, ctx.Writer); err != nil {
+		err_msg := fmt.Sprintf("Error while rendering enter form page: %s", err)
+		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer); err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (q *Query) NewFormEntry(ctx *gin.Context) {
+ctx.Status(http.StatusOK)
 }

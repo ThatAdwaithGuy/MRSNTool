@@ -175,6 +175,19 @@ func (q *Queries) GetDesignByFormName(ctx context.Context, formName string) ([]G
 	return items, nil
 }
 
+const getFormNameFromID = `-- name: GetFormNameFromID :one
+SELECT form_name
+FROM forms 
+WHERE id = $1
+`
+
+func (q *Queries) GetFormNameFromID(ctx context.Context, id int32) (string, error) {
+	row := q.db.QueryRow(ctx, getFormNameFromID, id)
+	var form_name string
+	err := row.Scan(&form_name)
+	return form_name, err
+}
+
 const listAllDesigns = `-- name: ListAllDesigns :many
 SELECT 
   d.id, 
