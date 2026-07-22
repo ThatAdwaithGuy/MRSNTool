@@ -125,7 +125,3 @@ func (q *Query) ViewDesigns(ctx *gin.Context) {
 		fmt.Println("Error: ", err)
 	}
 }
-
-func (q *Query) CreateForm(ctx *gin.Context) {
-	fmt.Println(ctx.PostForm("name"))
-}

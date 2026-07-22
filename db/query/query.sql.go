@@ -11,6 +11,32 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getAllEnterableForms = `-- name: GetAllEnterableForms :many
+SELECT f.id, f.form_name, f.enterable 
+FROM forms f 
+WHERE f.enterable = true
+`
+
+func (q *Queries) GetAllEnterableForms(ctx context.Context) ([]Form, error) {
+	rows, err := q.db.Query(ctx, getAllEnterableForms)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Form
+	for rows.Next() {
+		var i Form
+		if err := rows.Scan(&i.ID, &i.FormName, &i.Enterable); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllFormNames = `-- name: GetAllFormNames :many
 SELECT form_name
 FROM forms
@@ -222,5 +248,19 @@ func (q *Queries) NewDesign(ctx context.Context, arg NewDesignParams) (NewDesign
 		&i.Sequence,
 		&i.DropdownID,
 	)
+	return i, err
+}
+
+const setFormEnterable = `-- name: SetFormEnterable :one
+UPDATE forms
+SET enterable = true
+WHERE id = $1
+RETURNING id, form_name, enterable
+`
+
+func (q *Queries) SetFormEnterable(ctx context.Context, id int32) (Form, error) {
+	row := q.db.QueryRow(ctx, setFormEnterable, id)
+	var i Form
+	err := row.Scan(&i.ID, &i.FormName, &i.Enterable)
 	return i, err
 }

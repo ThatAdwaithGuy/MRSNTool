@@ -68,3 +68,17 @@ SELECT
 FROM design d
 JOIN forms f ON d.form_id = f.id
 ORDER BY f.form_name, d.sequence;
+
+-- name: SetFormEnterable :one 
+UPDATE forms
+SET enterable = true
+WHERE id = $1
+RETURNING *;
+
+-- name: GetAllEnterableForms :many
+SELECT f.id, f.form_name, f.enterable 
+FROM forms f 
+WHERE f.enterable = true 
+;
+
+
