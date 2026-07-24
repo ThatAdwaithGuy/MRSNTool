@@ -1,2 +1,2 @@
 # Internal Tool
-For use in LMS.
+For use in MRSN.
