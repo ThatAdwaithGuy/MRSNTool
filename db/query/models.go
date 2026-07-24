@@ -58,11 +58,11 @@ func (ns NullDataTypes) Value() (driver.Value, error) {
 
 type Datum struct {
 	ID          int32
-	Data        []byte
+	Data        string
 	DataType    DataTypes
 	DropdownID  pgtype.Int4
-	FormID      pgtype.Int4
-	FormEntryID pgtype.Int4
+	FormID      int32
+	FormEntryID int32
 }
 
 type Design struct {

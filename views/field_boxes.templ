@@ -170,3 +170,9 @@ templ selectInput(name string, mandatory bool, formId int32) {
 		<option value="" disabled selected>Loading options...</option>
 	</select>
 }
+
+templ SelectOptions(options []string) {
+    for _, opt := range options {
+        <option value={ opt }>{ opt }</option>
+    }
+}

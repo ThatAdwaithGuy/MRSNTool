@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -298,36 +297,117 @@ func (q *Query) EnterForm(ctx *gin.Context) {
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}
+	ctx.Status(http.StatusOK)
+}
+
+func (q *Query) enterForm(ctx *gin.Context, arg query.NewDataEntryParams) *query.Datum {
+	ret, err := q.query.NewDataEntry(ctx.Request.Context(), arg)
+	if err != nil {
+		err_msg := fmt.Sprintf("Error while inserting data form entry: %s", err)
+		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer); err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return nil
+		}
+		ctx.Status(http.StatusInternalServerError)
+		return nil
+	}
+	return &ret
 }
 
 func (q *Query) NewFormEntry(ctx *gin.Context) {
 	formIDstr := ctx.Param("id")
+	formID, err := strconv.Atoi(formIDstr)
+	if err != nil {
+		err_msg := fmt.Sprintf("Form ID is not a number: %s", err)
+		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer); err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+
 	if err := ctx.Request.ParseForm(); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		return
 	}
-	jsonTable := make(map[string]any)
-	for k, v := range ctx.Request.PostForm {
-		if len(v) == 1 {
-			jsonTable[k] = v[0]
-		} else {
-			jsonTable[k] = v
-		}
-	}
 
-	jsonStr, err := json.Marshal(jsonTable)
+	schema, err := q.query.GetDesignByFormID(ctx.Request.Context(), int32(formID))
 	if err != nil {
-		ctx.Status(http.StatusBadRequest)
+		err_msg := fmt.Sprintf("Error querying designs for form entry: %s", err)
+		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer); err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.Status(http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Printf("form_id: %s\nJSON: %+v\n", formIDstr, string( jsonStr ))
+	for k, v := range ctx.Request.PostForm {
+		val := v[0]
+
+		var design query.GetDesignByFormIDRow
+		for _, des := range schema {
+			if des.LabelName == k {
+				design = des
+				break
+			}
+		}
+		fmt.Println("val: ", val)
+
+		data_entry := q.enterForm(ctx, query.NewDataEntryParams{
+			Data:     val,
+			DataType: design.DataType,
+			FormID: int32( formID ),
+		})
+		if data_entry != nil {
+			fmt.Printf("Data entry: %+v\n", *data_entry)
+		} else {
+			fmt.Println("Data entry is nil", data_entry)
+		}
+	}
+	// TODO: render and write a grey out button for successful state
 	ctx.Status(http.StatusOK)
 }
 
 func (q *Query) GetSelectOptions(ctx *gin.Context) {
 	field := ctx.Query("field")
-	form_id := ctx.Query("form_id")
-	fmt.Println(field, form_id)
+	form_id_str := ctx.Query("form_id")
+	form_id, err := strconv.Atoi(form_id_str)
+	if err != nil {
+		err_msg := fmt.Sprintf("form_id ins't a number: %s", err)
+		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer); err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+
+	params := query.GetOptionsDropDownBoxParams{
+		LabelName: field,
+		FormID:    int32(form_id),
+	}
+
+	options, err := q.query.GetOptionsDropDownBox(ctx.Request.Context(), params)
+	if err != nil {
+		err_msg := fmt.Sprintf("Error while querying options for dropdown: %s", err)
+		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer); err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+
+	if err := views.SelectOptions(options).Render(ctx, ctx.Writer); err != nil {
+		err_msg := fmt.Sprintf("Error while rendering select options page: %s", err)
+		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer); err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
 	ctx.Status(http.StatusOK)
 }

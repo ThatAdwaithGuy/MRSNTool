@@ -202,7 +202,7 @@ func (q *Queries) GetNextFormEntryId(ctx context.Context) (int32, error) {
 }
 
 const getOptionsDropDownBox = `-- name: GetOptionsDropDownBox :many
-SELECT unnest(dd.options) AS option_value
+SELECT unnest(dd.options)::text AS option_value
 FROM design d
 JOIN dropdown dd ON d.dropdown_id = dd.id
 WHERE d.label_name = $1 
@@ -214,15 +214,15 @@ type GetOptionsDropDownBoxParams struct {
 	FormID    int32
 }
 
-func (q *Queries) GetOptionsDropDownBox(ctx context.Context, arg GetOptionsDropDownBoxParams) ([]interface{}, error) {
+func (q *Queries) GetOptionsDropDownBox(ctx context.Context, arg GetOptionsDropDownBoxParams) ([]string, error) {
 	rows, err := q.db.Query(ctx, getOptionsDropDownBox, arg.LabelName, arg.FormID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []interface{}
+	var items []string
 	for rows.Next() {
-		var option_value interface{}
+		var option_value string
 		if err := rows.Scan(&option_value); err != nil {
 			return nil, err
 		}
@@ -299,25 +299,19 @@ INSERT INTO data (
   $1,
   $2,
   $3,
-  $4
+  (SELECT COALESCE(MAX(form_entry_id), 0) + 1 FROM data WHERE form_id = $3)
 )
 RETURNING id, data, data_type, dropdown_id, form_id, form_entry_id
 `
 
 type NewDataEntryParams struct {
-	Data        []byte
-	DataType    DataTypes
-	FormID      pgtype.Int4
-	FormEntryID pgtype.Int4
+	Data     string
+	DataType DataTypes
+	FormID   int32
 }
 
 func (q *Queries) NewDataEntry(ctx context.Context, arg NewDataEntryParams) (Datum, error) {
-	row := q.db.QueryRow(ctx, newDataEntry,
-		arg.Data,
-		arg.DataType,
-		arg.FormID,
-		arg.FormEntryID,
-	)
+	row := q.db.QueryRow(ctx, newDataEntry, arg.Data, arg.DataType, arg.FormID)
 	var i Datum
 	err := row.Scan(
 		&i.ID,

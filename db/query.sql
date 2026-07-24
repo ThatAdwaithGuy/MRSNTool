@@ -122,12 +122,12 @@ INSERT INTO data (
   $1,
   $2,
   $3,
-  $4
+  (SELECT COALESCE(MAX(form_entry_id), 0) + 1 FROM data WHERE form_id = $3)
 )
 RETURNING *;
 
 -- name: GetOptionsDropDownBox :many
-SELECT unnest(dd.options) AS option_value
+SELECT unnest(dd.options)::text AS option_value
 FROM design d
 JOIN dropdown dd ON d.dropdown_id = dd.id
 WHERE d.label_name = $1 
