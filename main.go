@@ -69,6 +69,7 @@ func main() {
 	r.POST("/api/make_form_enterable", query.MakeFormEnterable)
 	r.POST("/api/new_form_entry/:id", query.NewFormEntry)
 	r.GET("/api/get_select_options/", query.GetSelectOptions)
+	r.GET("/api/get_form_stats/", query.GetFormStats)
 	
 
 	if err := r.Run(); err != nil {

@@ -343,22 +343,37 @@ func (q *Query) NewFormEntry(ctx *gin.Context) {
 		return
 	}
 
+	form_entry_id, err := q.query.GetNextFormEntryId(ctx.Request.Context(), int32(formID))
+	if err != nil {
+		err_msg := fmt.Sprintf("Error generating form entry id: %s", err)
+		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer); err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+
 	for k, v := range ctx.Request.PostForm {
 		val := v[0]
 
 		var design query.GetDesignByFormIDRow
-		for _, des := range schema {
+		for i, des := range schema {
 			if des.LabelName == k {
 				design = des
+				schema[i] = schema[len(schema)-1]
+				schema = schema[:len(schema)-1]
 				break
 			}
 		}
+
 		fmt.Println("val: ", val)
 
 		data_entry := q.enterForm(ctx, query.NewDataEntryParams{
-			Data:     val,
-			DataType: design.DataType,
-			FormID: int32( formID ),
+			Data:        val,
+			DataType:    design.DataType,
+			FormID:      int32(formID),
+			FormEntryID: form_entry_id,
 		})
 		if data_entry != nil {
 			fmt.Printf("Data entry: %+v\n", *data_entry)
@@ -366,6 +381,24 @@ func (q *Query) NewFormEntry(ctx *gin.Context) {
 			fmt.Println("Data entry is nil", data_entry)
 		}
 	}
+
+	if len(schema) != 0 {
+		for _, des := range schema {
+		data_entry := q.enterForm(ctx, query.NewDataEntryParams{
+			Data:        "",
+			DataType:    des.DataType,
+			FormID:      int32(formID),
+			FormEntryID: form_entry_id,
+		})
+		if data_entry != nil {
+			fmt.Printf("Filled empty Data: %+v\n", *data_entry)
+		} else {
+			fmt.Println("Data entry is nil", data_entry)
+		}
+
+		}
+	}
+
 	// TODO: render and write a grey out button for successful state
 	ctx.Status(http.StatusOK)
 }
@@ -410,4 +443,32 @@ func (q *Query) GetSelectOptions(ctx *gin.Context) {
 		return
 	}
 	ctx.Status(http.StatusOK)
+}
+
+func (q *Query) GetFormStats(ctx *gin.Context) {
+	form_name := ctx.Query("form")
+	fmt.Println("form name:", form_name)
+
+	fieldCount, err := q.query.GetRowCountFromFormName(ctx.Request.Context(), form_name)
+	if err != nil {
+		fmt.Println("ERROR while access row count: ", err)
+		fieldCount = 0
+	}
+
+	rowCount, err := q.query.GetDataRowCountFromFormName(ctx.Request.Context(), form_name)
+	if err != nil {
+		fmt.Println("ERROR while access data row count: ", err)
+		rowCount = 0
+	}
+
+	if err := views.FormStatsPartial(fieldCount, rowCount / fieldCount ).Render(ctx, ctx.Writer); err != nil {
+		err_msg := fmt.Sprintf("Error while rendering form stats: %s", err)
+		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer); err != nil {
+			fmt.Printf("error while rendering error message for %s\n", err_msg)
+			return
+		}
+		ctx.Status(http.StatusInternalServerError)
+		return
+
+	}
 }

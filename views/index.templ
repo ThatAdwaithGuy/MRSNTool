@@ -1,7 +1,7 @@
 package views
 
 // Layout wrapper to keep HTML structure consistent
-templ Layout(title string, body templ.Component) {
+templ Layout(title string, body templ.Component, name string) {
 	<!DOCTYPE html>
 	<html lang="en">
 	<head>
@@ -9,7 +9,7 @@ templ Layout(title string, body templ.Component) {
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 		<title>{ title }</title>
 		<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    @FieldScript()
+		@FieldScript()
 		<script src="https://unpkg.com/htmx.org@1.9.10"></script>
 	</head>
 	<body class="bg-slate-900 text-slate-100 font-sans flex h-screen overflow-hidden">
@@ -19,27 +19,23 @@ templ Layout(title string, body templ.Component) {
 					<div class="h-8 w-8 rounded bg-indigo-600 flex items-center justify-center font-bold text-lg">Ω</div>
 					<span class="font-semibold tracking-wider text-lg">CRM Terminal</span>
 				</div>
-				<nav class="space-y-1">
-					<a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded bg-indigo-600/20 text-indigo-400 font-medium">
+				
+				<nav class="space-y-1.5">
+					<a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 font-medium transition-colors">
 						<span>Dashboard</span>
 					</a>
-				</nav>
-				<nav class="space-y-1">
-					<a href="/create_form" class="flex items-center gap-3 px-5 py-2.5 rounded bg-indigo-600/20 text-indigo-400 font-medium">
+					<a href="/create_form" class="flex items-center gap-3 px-3 py-2.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 font-medium transition-colors">
 						<span>Create Form</span>
 					</a>
-				</nav>
-				<nav class="space-y-1">
-					<a href="/view_designs" class="flex items-center gap-3 px-5 py-2.5 rounded bg-indigo-600/20 text-indigo-400 font-medium">
+					<a href="/view_designs" class="flex items-center gap-3 px-3 py-2.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 font-medium transition-colors">
 						<span>View Designs</span>
 					</a>
-				</nav>
-				<nav class="space-y-1">
-					<a href="/forms" class="flex items-center gap-3 px-5 py-2.5 rounded bg-indigo-600/20 text-indigo-400 font-medium">
+					<a href="/forms" class="flex items-center gap-3 px-3 py-2.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 font-medium transition-colors">
 						<span>Forms</span>
 					</a>
 				</nav>
 			</div>
+			
 			<div class="p-2 text-xs text-slate-500 border-t border-slate-800">
 				v1.0.0 • Connected
 			</div>
@@ -47,7 +43,7 @@ templ Layout(title string, body templ.Component) {
 
 		<main class="flex-1 flex flex-col overflow-y-auto">
 			<header class="h-16 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-900/50 backdrop-blur">
-				<h1 class="text-xl font-semibold">System Overview</h1>
+				<h1 class="text-xl font-semibold">{ name }</h1>
 				<div class="flex items-center gap-4">
 				</div>
 			</header>
@@ -62,7 +58,7 @@ templ Layout(title string, body templ.Component) {
 
 // Main Dashboard view component
 templ Index() {
-	@Layout("CRM Terminal - Home", DashboardContent())
+	@Layout("CRM Terminal - Home", DashboardContent(), "Dashboard")
 }
 
 // Internal metric/content grid

@@ -34,6 +34,7 @@ SELECT
   i.dropdown_id
 FROM inserted i;
 
+
 -- name: GetDesignByFormName :many
 SELECT 
   d.id, 
@@ -107,10 +108,9 @@ SELECT form_name
 FROM forms 
 WHERE id = $1;
 
+
 -- name: GetNextFormEntryId :one
-SELECT COALESCE(MAX(form_entry_id), 0) + 1 
-FROM data 
-FOR UPDATE;
+SELECT COALESCE(MAX(form_entry_id), 0) + 1 FROM data WHERE form_id = $1;
 
 -- name: NewDataEntry :one 
 INSERT INTO data (
@@ -122,7 +122,7 @@ INSERT INTO data (
   $1,
   $2,
   $3,
-  (SELECT COALESCE(MAX(form_entry_id), 0) + 1 FROM data WHERE form_id = $3)
+  $4 
 )
 RETURNING *;
 
@@ -133,3 +133,15 @@ JOIN dropdown dd ON d.dropdown_id = dd.id
 WHERE d.label_name = $1 
   AND d.form_id = $2; 
 
+
+-- name: GetRowCountFromFormName :one
+SELECT COUNT(*)
+FROM design d
+JOIN forms f ON d.form_id = f.id
+WHERE f.form_name = $1;
+
+-- name: GetDataRowCountFromFormName :one
+SELECT COUNT(*)
+FROM data d
+JOIN forms f ON d.form_id = f.id
+WHERE f.form_name = $1;

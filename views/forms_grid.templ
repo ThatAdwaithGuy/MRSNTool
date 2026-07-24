@@ -13,7 +13,7 @@ func slugify(s string) string {
 }
 
 templ FormsGridPage(forms []query.Form) {
-	@Layout("CRM Terminal - Forms", formsGrid(forms))
+	@Layout("CRM Terminal - Forms", formsGrid(forms), "Forms")
 }
 
 templ formsGrid(forms []query.Form) {
@@ -80,7 +80,7 @@ templ FormCard(form query.Form) {
 }
 
 // Partial returned by GET /api/get_form_stats?form=... to swap into the card
-templ FormStatsPartial(fieldCount int, rowCount int) {
+templ FormStatsPartial(fieldCount int64, rowCount int64) {
 	<div class="grid grid-cols-2 gap-3">
 		<div class="rounded bg-slate-900/60 border border-slate-800/50 px-3 py-2">
 			<div class="text-lg font-mono font-semibold text-slate-200">

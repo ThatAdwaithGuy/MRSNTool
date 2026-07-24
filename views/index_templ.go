@@ -9,7 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 // Layout wrapper to keep HTML structure consistent
-func Layout(title string, body templ.Component) templ.Component {
+func Layout(title string, body templ.Component, name string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -51,7 +51,20 @@ func Layout(title string, body templ.Component) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<script src=\"https://unpkg.com/htmx.org@1.9.10\"></script></head><body class=\"bg-slate-900 text-slate-100 font-sans flex h-screen overflow-hidden\"><aside class=\"w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between p-4\"><div><div class=\"flex items-center gap-3 px-2 py-4 border-b border-slate-800 mb-6\"><div class=\"h-8 w-8 rounded bg-indigo-600 flex items-center justify-center font-bold text-lg\">Ω</div><span class=\"font-semibold tracking-wider text-lg\">CRM Terminal</span></div><nav class=\"space-y-1\"><a href=\"#\" class=\"flex items-center gap-3 px-3 py-2.5 rounded bg-indigo-600/20 text-indigo-400 font-medium\"><span>Dashboard</span></a></nav><nav class=\"space-y-1\"><a href=\"/create_form\" class=\"flex items-center gap-3 px-5 py-2.5 rounded bg-indigo-600/20 text-indigo-400 font-medium\"><span>Create Form</span></a></nav><nav class=\"space-y-1\"><a href=\"/view_designs\" class=\"flex items-center gap-3 px-5 py-2.5 rounded bg-indigo-600/20 text-indigo-400 font-medium\"><span>View Designs</span></a></nav><nav class=\"space-y-1\"><a href=\"/forms\" class=\"flex items-center gap-3 px-5 py-2.5 rounded bg-indigo-600/20 text-indigo-400 font-medium\"><span>Forms</span></a></nav></div><div class=\"p-2 text-xs text-slate-500 border-t border-slate-800\">v1.0.0 • Connected</div></aside><main class=\"flex-1 flex flex-col overflow-y-auto\"><header class=\"h-16 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-900/50 backdrop-blur\"><h1 class=\"text-xl font-semibold\">System Overview</h1><div class=\"flex items-center gap-4\"></div></header><div class=\"p-8 space-y-8 max-w-7xl w-full mx-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<script src=\"https://unpkg.com/htmx.org@1.9.10\"></script></head><body class=\"bg-slate-900 text-slate-100 font-sans flex h-screen overflow-hidden\"><aside class=\"w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between p-4\"><div><div class=\"flex items-center gap-3 px-2 py-4 border-b border-slate-800 mb-6\"><div class=\"h-8 w-8 rounded bg-indigo-600 flex items-center justify-center font-bold text-lg\">Ω</div><span class=\"font-semibold tracking-wider text-lg\">CRM Terminal</span></div><nav class=\"space-y-1.5\"><a href=\"#\" class=\"flex items-center gap-3 px-3 py-2.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 font-medium transition-colors\"><span>Dashboard</span></a> <a href=\"/create_form\" class=\"flex items-center gap-3 px-3 py-2.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 font-medium transition-colors\"><span>Create Form</span></a> <a href=\"/view_designs\" class=\"flex items-center gap-3 px-3 py-2.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 font-medium transition-colors\"><span>View Designs</span></a> <a href=\"/forms\" class=\"flex items-center gap-3 px-3 py-2.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 font-medium transition-colors\"><span>Forms</span></a></nav></div><div class=\"p-2 text-xs text-slate-500 border-t border-slate-800\">v1.0.0 • Connected</div></aside><main class=\"flex-1 flex flex-col overflow-y-auto\"><header class=\"h-16 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-900/50 backdrop-blur\"><h1 class=\"text-xl font-semibold\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var3 string
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(name)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/index.templ`, Line: 46, Col: 44}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</h1><div class=\"flex items-center gap-4\"></div></header><div class=\"p-8 space-y-8 max-w-7xl w-full mx-auto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -59,7 +72,7 @@ func Layout(title string, body templ.Component) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div></main></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></main></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -84,12 +97,12 @@ func Index() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var3 == nil {
-			templ_7745c5c3_Var3 = templ.NopComponent
+		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var4 == nil {
+			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = Layout("CRM Terminal - Home", DashboardContent()).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Layout("CRM Terminal - Home", DashboardContent(), "Dashboard").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -114,9 +127,9 @@ func DashboardContent() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var4 == nil {
-			templ_7745c5c3_Var4 = templ.NopComponent
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		return nil

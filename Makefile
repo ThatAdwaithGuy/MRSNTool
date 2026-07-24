@@ -5,7 +5,7 @@ migrate:
 db-up:
 	sudo docker compose up -d postgres_db db_migrations
 
-delete:
+delete-db:
 	sudo docker compose down -v
 
 .PHONY: dev

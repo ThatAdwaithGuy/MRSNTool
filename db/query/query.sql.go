@@ -63,6 +63,20 @@ func (q *Queries) GetAllFormNames(ctx context.Context) ([]Form, error) {
 	return items, nil
 }
 
+const getDataRowCountFromFormName = `-- name: GetDataRowCountFromFormName :one
+SELECT COUNT(*)
+FROM data d
+JOIN forms f ON d.form_id = f.id
+WHERE f.form_name = $1
+`
+
+func (q *Queries) GetDataRowCountFromFormName(ctx context.Context, formName string) (int64, error) {
+	row := q.db.QueryRow(ctx, getDataRowCountFromFormName, formName)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getDesignByFormID = `-- name: GetDesignByFormID :many
 SELECT 
   d.id, 
@@ -189,13 +203,11 @@ func (q *Queries) GetFormNameFromID(ctx context.Context, id int32) (string, erro
 }
 
 const getNextFormEntryId = `-- name: GetNextFormEntryId :one
-SELECT COALESCE(MAX(form_entry_id), 0) + 1 
-FROM data 
-FOR UPDATE
+SELECT COALESCE(MAX(form_entry_id), 0) + 1 FROM data WHERE form_id = $1
 `
 
-func (q *Queries) GetNextFormEntryId(ctx context.Context) (int32, error) {
-	row := q.db.QueryRow(ctx, getNextFormEntryId)
+func (q *Queries) GetNextFormEntryId(ctx context.Context, formID int32) (int32, error) {
+	row := q.db.QueryRow(ctx, getNextFormEntryId, formID)
 	var column_1 int32
 	err := row.Scan(&column_1)
 	return column_1, err
@@ -232,6 +244,20 @@ func (q *Queries) GetOptionsDropDownBox(ctx context.Context, arg GetOptionsDropD
 		return nil, err
 	}
 	return items, nil
+}
+
+const getRowCountFromFormName = `-- name: GetRowCountFromFormName :one
+SELECT COUNT(*)
+FROM design d
+JOIN forms f ON d.form_id = f.id
+WHERE f.form_name = $1
+`
+
+func (q *Queries) GetRowCountFromFormName(ctx context.Context, formName string) (int64, error) {
+	row := q.db.QueryRow(ctx, getRowCountFromFormName, formName)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const listAllDesigns = `-- name: ListAllDesigns :many
@@ -299,19 +325,25 @@ INSERT INTO data (
   $1,
   $2,
   $3,
-  (SELECT COALESCE(MAX(form_entry_id), 0) + 1 FROM data WHERE form_id = $3)
+  $4 
 )
 RETURNING id, data, data_type, dropdown_id, form_id, form_entry_id
 `
 
 type NewDataEntryParams struct {
-	Data     string
-	DataType DataTypes
-	FormID   int32
+	Data        string
+	DataType    DataTypes
+	FormID      int32
+	FormEntryID int32
 }
 
 func (q *Queries) NewDataEntry(ctx context.Context, arg NewDataEntryParams) (Datum, error) {
-	row := q.db.QueryRow(ctx, newDataEntry, arg.Data, arg.DataType, arg.FormID)
+	row := q.db.QueryRow(ctx, newDataEntry,
+		arg.Data,
+		arg.DataType,
+		arg.FormID,
+		arg.FormEntryID,
+	)
 	var i Datum
 	err := row.Scan(
 		&i.ID,

@@ -6,7 +6,7 @@ import (
 )
 
 templ EnterFormPage(fields []Field, formName string, formID int32) {
-	@Layout("CRM Terminal - New Design Entry", enterForm(fields, formName, formID))
+	@Layout("CRM Terminal - New Design Entry", enterForm(fields, formName, formID), "Enter Form")
 }
 
 templ enterForm(fields []Field, formName string, formID int32) {
@@ -26,7 +26,20 @@ templ enterForm(fields []Field, formName string, formID int32) {
 				</div>
 			</div>
 		</div>
-		<form class="space-y-4">
+
+		<div 
+			id="success-banner" 
+			class="hidden transition-all duration-300 bg-emerald-950 border border-emerald-800/50 text-emerald-400 px-4 py-3 rounded-lg text-sm font-medium text-center shadow-lg"
+		>
+			Form submitted successfully!
+		</div>
+
+		<form 
+			class="space-y-4"
+			hx-post={ templ.URL("/api/new_form_entry/" + strconv.FormatInt(int64(formID), 10)) }
+      hx-swap="none"
+      hx-on::after-request="if(event.target === this && event.detail.successful) { const banner = document.getElementById('success-banner'); banner.classList.remove('hidden'); setTimeout(() => banner.classList.add('hidden'), 2000); this.reset(); }"
+		>
 			for _, field := range fields {
 				switch field.DataType {
 					case query.DataTypesText:
@@ -43,7 +56,6 @@ templ enterForm(fields []Field, formName string, formID int32) {
 			}
 			<div class="flex justify-end pt-2">
 				<button
-					hx-post={ templ.URL("/api/new_form_entry/" + strconv.FormatInt(int64(formID), 10)) }
 					type="submit"
 					class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition shadow-sm"
 				>

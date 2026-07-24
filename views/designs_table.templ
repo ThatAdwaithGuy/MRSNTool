@@ -8,7 +8,7 @@ import (
 
 // View wrapper rendering the forms list inside the CRM Layout
 templ FormsListPage(formNames []query.Form) {
-	@Layout("CRM Terminal - Form Configurations", formNamesList(formNames))
+	@Layout("CRM Terminal - Form Configurations", formNamesList(formNames), "Forms List")
 }
 
 // Interactive accordion list for unique form names
