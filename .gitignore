@@ -1,4 +1,5 @@
 db/query
+tmp/
 db/schema.sql
 views/*_templ.go
 go.sum
