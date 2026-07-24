@@ -188,6 +188,52 @@ func (q *Queries) GetFormNameFromID(ctx context.Context, id int32) (string, erro
 	return form_name, err
 }
 
+const getNextFormEntryId = `-- name: GetNextFormEntryId :one
+SELECT COALESCE(MAX(form_entry_id), 0) + 1 
+FROM data 
+FOR UPDATE
+`
+
+func (q *Queries) GetNextFormEntryId(ctx context.Context) (int32, error) {
+	row := q.db.QueryRow(ctx, getNextFormEntryId)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const getOptionsDropDownBox = `-- name: GetOptionsDropDownBox :many
+SELECT unnest(dd.options) AS option_value
+FROM design d
+JOIN dropdown dd ON d.dropdown_id = dd.id
+WHERE d.label_name = $1 
+  AND d.form_id = $2
+`
+
+type GetOptionsDropDownBoxParams struct {
+	LabelName string
+	FormID    int32
+}
+
+func (q *Queries) GetOptionsDropDownBox(ctx context.Context, arg GetOptionsDropDownBoxParams) ([]interface{}, error) {
+	rows, err := q.db.Query(ctx, getOptionsDropDownBox, arg.LabelName, arg.FormID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []interface{}
+	for rows.Next() {
+		var option_value interface{}
+		if err := rows.Scan(&option_value); err != nil {
+			return nil, err
+		}
+		items = append(items, option_value)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAllDesigns = `-- name: ListAllDesigns :many
 SELECT 
   d.id, 
@@ -241,6 +287,47 @@ func (q *Queries) ListAllDesigns(ctx context.Context) ([]ListAllDesignsRow, erro
 		return nil, err
 	}
 	return items, nil
+}
+
+const newDataEntry = `-- name: NewDataEntry :one
+INSERT INTO data (
+  data, 
+  data_type,
+  form_id,
+  form_entry_id
+) VALUES (
+  $1,
+  $2,
+  $3,
+  $4
+)
+RETURNING id, data, data_type, dropdown_id, form_id, form_entry_id
+`
+
+type NewDataEntryParams struct {
+	Data        []byte
+	DataType    DataTypes
+	FormID      pgtype.Int4
+	FormEntryID pgtype.Int4
+}
+
+func (q *Queries) NewDataEntry(ctx context.Context, arg NewDataEntryParams) (Datum, error) {
+	row := q.db.QueryRow(ctx, newDataEntry,
+		arg.Data,
+		arg.DataType,
+		arg.FormID,
+		arg.FormEntryID,
+	)
+	var i Datum
+	err := row.Scan(
+		&i.ID,
+		&i.Data,
+		&i.DataType,
+		&i.DropdownID,
+		&i.FormID,
+		&i.FormEntryID,
+	)
+	return i, err
 }
 
 const newDesign = `-- name: NewDesign :one

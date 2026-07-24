@@ -1,8 +1,8 @@
 package views
 
 import (
-  "github.com/ThatAdwaithGuy/req/db/query" 
-  "strconv"
+	"github.com/ThatAdwaithGuy/req/db/query"
+	"strconv"
 )
 
 templ EnterFormPage(fields []Field, formName string, formID int32) {
@@ -38,12 +38,12 @@ templ enterForm(fields []Field, formName string, formID int32) {
 					case query.DataTypesTextarea:
 						@TextareaFieldBox(field.LabelName, field.Required, &fields)
 					case query.DataTypesSelect:
-						@SelectFieldBox(field.LabelName, field.Required, &fields)
+						@SelectFieldBox(field.LabelName, field.Required, &fields, formID)
 				}
 			}
 			<div class="flex justify-end pt-2">
 				<button
-					hx-post={ templ.URL("/api/new_form_entry/" + strconv.FormatInt( int64( formID ),10 )) }
+					hx-post={ templ.URL("/api/new_form_entry/" + strconv.FormatInt(int64(formID), 10)) }
 					type="submit"
 					class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition shadow-sm"
 				>

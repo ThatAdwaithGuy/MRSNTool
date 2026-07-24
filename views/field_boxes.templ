@@ -2,7 +2,7 @@ package views
 
 import (
   "fmt"
-
+  "net/url"
 	"github.com/ThatAdwaithGuy/req/db/query"
 )
 
@@ -149,12 +149,12 @@ templ textareaInput(name string, mandatory bool) {
 }
 
 // SelectFieldBox renders a dropdown whose options are fetched from the backend.
-templ SelectFieldBox(name string, mandatory bool, fields *[]Field) {
+templ SelectFieldBox(name string, mandatory bool, fields *[]Field, formId int32) {
 	{ track(fields, name, query.DataTypesSelect) }
-	@box(name, mandatory, selectInput(name, mandatory))
+	@box(name, mandatory, selectInput(name, mandatory, formId))
 }
 
-templ selectInput(name string, mandatory bool) {
+templ selectInput(name string, mandatory bool, formId int32) {
 	<select
 		name={ name }
 		if mandatory {
@@ -162,7 +162,7 @@ templ selectInput(name string, mandatory bool) {
 		}
 		onblur="reqValidate(this)"
 		onchange="reqValidate(this)"
-		hx-get={ fmt.Sprintf("/api/get_select_options?field=%s", name) }
+		hx-get={ templ.URL( fmt.Sprintf("/api/get_select_options?field=%s&form_id=%d", url.QueryEscape( name ), formId)  )}
 		hx-trigger="revealed"
 		hx-swap="beforeend"
 		class="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition"

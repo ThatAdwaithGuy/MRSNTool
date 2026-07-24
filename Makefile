@@ -21,6 +21,7 @@ vet:
 run: vet
 	templ generate
 	sqlc generate 
+	dbmate dump
 	sudo docker compose up --build
 compile:
 	templ generate

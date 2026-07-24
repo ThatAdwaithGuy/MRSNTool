@@ -106,3 +106,30 @@ RETURNING *;
 SELECT form_name
 FROM forms 
 WHERE id = $1;
+
+-- name: GetNextFormEntryId :one
+SELECT COALESCE(MAX(form_entry_id), 0) + 1 
+FROM data 
+FOR UPDATE;
+
+-- name: NewDataEntry :one 
+INSERT INTO data (
+  data, 
+  data_type,
+  form_id,
+  form_entry_id
+) VALUES (
+  $1,
+  $2,
+  $3,
+  $4
+)
+RETURNING *;
+
+-- name: GetOptionsDropDownBox :many
+SELECT unnest(dd.options) AS option_value
+FROM design d
+JOIN dropdown dd ON d.dropdown_id = dd.id
+WHERE d.label_name = $1 
+  AND d.form_id = $2; 
+

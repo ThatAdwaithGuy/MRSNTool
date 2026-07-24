@@ -67,7 +67,8 @@ func main() {
 	r.GET("/api/get_form_designs", query.GetFormEntries)
 	r.GET("/api/get_enterable_forms", query.GetEnterableForms)
 	r.POST("/api/make_form_enterable", query.MakeFormEnterable)
-	r.POST("/api/new_form_entry", query.NewFormEntry)
+	r.POST("/api/new_form_entry/:id", query.NewFormEntry)
+	r.GET("/api/get_select_options/", query.GetSelectOptions)
 	
 
 	if err := r.Run(); err != nil {
