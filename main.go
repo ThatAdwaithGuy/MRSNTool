@@ -71,7 +71,6 @@ func main() {
 	r.GET("/api/get_select_options/", query.GetSelectOptions)
 	r.GET("/api/get_form_stats/", query.GetFormStats)
 	
-	fmt.Println("hello world")
 	if err := r.Run(); err != nil {
 		fmt.Println(err)
 	}
