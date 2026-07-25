@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 
 	"github.com/ThatAdwaithGuy/req/db/query"
@@ -39,12 +38,6 @@ func main() {
 
 	queries := query.New(conn)
 	query := Query{query: queries}
-
-	r.GET("/ping", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
 
 	r.GET("/", Index)
 	r.GET("/create_form", CreateDesignForm)
