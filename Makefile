@@ -1,3 +1,6 @@
+include .env 
+export 
+
 migrate:
 	dbmate dump
 
@@ -12,7 +15,8 @@ delete-db:
 dev: db-up
 	templ generate
 	sqlc generate
-	DB_CONTAINER_URL="postgres://adwaith:req3110@localhost:5432/reqdb?sslmode=disable" PORT=8080 air
+	# DB_CONTAINER_URL="postgres://adwaith:req3110@localhost:5432/reqdb?sslmode=disable" PORT=8080 air
+	PORT=8080 air
 
 .PHONY: vet
 vet:
