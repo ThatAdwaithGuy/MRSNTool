@@ -12,17 +12,27 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+func renderErrorMessage(ctx *gin.Context, msg string, arg ...any) {
+	ctx.Status(http.StatusInternalServerError)
+	errMsg := fmt.Sprintf(msg, arg...)
+	err := views.AlertMessage(false, errMsg).Render(ctx.Request.Context(), ctx.Writer)
+	if err != nil {
+		fmt.Printf("error while rendering error message for %s\n", errMsg)
+		return
+	}
+}
+
 func Index(ctx *gin.Context) {
 	ctx.Header("Content-Type", "text/html; charset=utf-8")
 	if err := views.Index().Render(ctx, ctx.Writer); err != nil {
-		fmt.Println("Error: ", err)
+		renderErrorMessage(ctx, "Error while rendering Index page: %s", err)
 	}
 }
 
 func CreateDesignForm(ctx *gin.Context) {
 	ctx.Header("Content-Type", "text/html; charset=utf-8")
 	if err := views.CreateDesignPage().Render(ctx, ctx.Writer); err != nil {
-		fmt.Println("Error: ", err)
+		renderErrorMessage(ctx, "Error while rendering create design page: %s", err)
 	}
 }
 
@@ -48,13 +58,7 @@ func (q *Query) PostDesigns(ctx *gin.Context) {
 
 	sequence, err := strconv.Atoi(ctx.PostForm("sequence"))
 	if err != nil {
-		err_msg := fmt.Sprintf("Sequence is not a int: %s", err)
-		str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(false, err_msg))
-		if err != nil {
-			fmt.Printf("error while rendering error message for %s\n", err_msg)
-			return
-		}
-		ctx.String(http.StatusInternalServerError, str)
+		renderErrorMessage(ctx, "Error while rendering post designs page: %s", err)
 		return
 	}
 	isMandatory := ctx.PostForm("is_mandatory") == "true"
@@ -70,13 +74,7 @@ func (q *Query) PostDesigns(ctx *gin.Context) {
 		options := strings.Split(options_string, ",")
 		dropdown, err := q.query.NewDropDown(ctx.Request.Context(), options)
 		if err != nil {
-			err_msg := fmt.Sprintf("Error while inserting new dropdown box values: %s", err)
-			str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(false, err_msg))
-			if err != nil {
-				fmt.Printf("error while rendering error message for %s\n", err_msg)
-				return
-			}
-			ctx.String(http.StatusInternalServerError, str)
+			renderErrorMessage(ctx, "Error while inserting new dropdown box values: %s", err)
 			return
 		}
 		dropdown_id.Int32 = dropdown.ID
@@ -93,23 +91,16 @@ func (q *Query) PostDesigns(ctx *gin.Context) {
 	}
 	design, err := q.query.NewDesign(ctx.Request.Context(), params)
 	if err != nil {
-		err_msg := fmt.Sprintf("error while inserting design: %s", err)
-		str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(false, err_msg))
-		if err != nil {
-			fmt.Printf("error while rendering error message for %s\n", err_msg)
-			return
-		}
-		ctx.String(http.StatusInternalServerError, str)
+		renderErrorMessage(ctx,"error while inserting design: %s", err)
 		return
 	}
 	fmt.Println("Inserted design: ", design)
-	str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(true, "Successfully inserted design"))
-	if err != nil {
-		fmt.Println("error while rendering success message for form design insert")
+
+	viewErr := views.AlertMessage(true, "Successfully inserted design").Render(ctx.Request.Context(), ctx.Writer)
+	if viewErr != nil {
+		renderErrorMessage(ctx, "error while rendering success message for form design insert")
 		return
 	}
-
-	ctx.String(http.StatusOK, str)
 }
 
 func (q *Query) GetFormEntries(ctx *gin.Context) {
@@ -117,13 +108,7 @@ func (q *Query) GetFormEntries(ctx *gin.Context) {
 
 	designs, err := q.query.GetDesignByFormName(ctx.Request.Context(), formName)
 	if err != nil {
-		err_msg := fmt.Sprintf("error while getting design: %s", err)
-		str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(false, err_msg))
-		if err != nil {
-			fmt.Printf("error while rendering error message for %s\n", err_msg)
-			return
-		}
-		ctx.String(http.StatusInternalServerError, str)
+		renderErrorMessage(ctx, "error while getting design: %s", err)
 		return
 	}
 
@@ -138,13 +123,7 @@ func (q *Query) GetFormEntries(ctx *gin.Context) {
 func (q *Query) ViewDesigns(ctx *gin.Context) {
 	designs, err := q.query.GetAllFormNames(ctx.Request.Context())
 	if err != nil {
-		err_msg := fmt.Sprintf("error while getting design: %s", err)
-		str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(false, err_msg))
-		if err != nil {
-			fmt.Printf("error while rendering error message for %s\n", err_msg)
-			return
-		}
-		ctx.String(http.StatusInternalServerError, str)
+		renderErrorMessage(ctx, "error while getting design: %s", err)
 		return
 	}
 
@@ -163,13 +142,7 @@ type JsonForms struct {
 func (q *Query) GetEnterableForms(ctx *gin.Context) {
 	designs, err := q.query.GetAllEnterableForms(ctx.Request.Context())
 	if err != nil {
-		err_msg := fmt.Sprintf("error while querying enterable forms: %s", err)
-		str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(false, err_msg))
-		if err != nil {
-			fmt.Printf("error while rendering error message for %s\n", err_msg)
-			return
-		}
-		ctx.String(http.StatusInternalServerError, str)
+		renderErrorMessage(ctx, "error while querying enterable forms: %s", err)
 		return
 	}
 
@@ -193,24 +166,12 @@ func (q *Query) MakeFormEnterable(ctx *gin.Context) {
 	fmt.Printf("Made %s enterable\n", name)
 	err := q.query.SetFormEnterable(ctx.Request.Context(), name)
 	if err != nil {
-		err_msg := fmt.Sprintf("error while getting enterable forms: %s", err)
-		str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(false, err_msg))
-		if err != nil {
-			fmt.Printf("error while rendering error message for %s\n", err_msg)
-			return
-		}
-		ctx.String(http.StatusInternalServerError, str)
+		renderErrorMessage(ctx," error while getting enterable forms: %s", err)
 		return
 	}
 
 	if err := views.FormButton("", true).Render(ctx, ctx.Writer); err != nil {
-		err_msg := fmt.Sprintf("error while rendering button: %s", err)
-		str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(false, err_msg))
-		if err != nil {
-			fmt.Printf("error while rendering error message for %s\n", err_msg)
-			return
-		}
-		ctx.String(http.StatusInternalServerError, str)
+		renderErrorMessage(ctx, "error while rendering button: %s", err)
 		return
 	}
 
@@ -220,13 +181,7 @@ func (q *Query) MakeFormEnterable(ctx *gin.Context) {
 func (q *Query) FormsPage(ctx *gin.Context) {
 	forms, err := q.query.GetAllEnterableForms(ctx.Request.Context())
 	if err != nil {
-		err_msg := fmt.Sprintf("error while qurrying enterable forms: %s", err)
-		str, err := RenderToString(ctx.Request.Context(), views.AlertMessage(false, err_msg))
-		if err != nil {
-			fmt.Printf("error while rendering error message for %s\n", err_msg)
-			return
-		}
-		ctx.String(http.StatusInternalServerError, str)
+		renderErrorMessage(ctx, "error while qurrying enterable forms: %s", err)
 		return
 	}
 	fmt.Println(forms)
@@ -384,17 +339,17 @@ func (q *Query) NewFormEntry(ctx *gin.Context) {
 
 	if len(schema) != 0 {
 		for _, des := range schema {
-		data_entry := q.enterForm(ctx, query.NewDataEntryParams{
-			Data:        "",
-			DataType:    des.DataType,
-			FormID:      int32(formID),
-			FormEntryID: form_entry_id,
-		})
-		if data_entry != nil {
-			fmt.Printf("Filled empty Data: %+v\n", *data_entry)
-		} else {
-			fmt.Println("Data entry is nil", data_entry)
-		}
+			data_entry := q.enterForm(ctx, query.NewDataEntryParams{
+				Data:        "",
+				DataType:    des.DataType,
+				FormID:      int32(formID),
+				FormEntryID: form_entry_id,
+			})
+			if data_entry != nil {
+				fmt.Printf("Filled empty Data: %+v\n", *data_entry)
+			} else {
+				fmt.Println("Data entry is nil", data_entry)
+			}
 
 		}
 	}
@@ -461,7 +416,7 @@ func (q *Query) GetFormStats(ctx *gin.Context) {
 		rowCount = 0
 	}
 
-	if err := views.FormStatsPartial(fieldCount, rowCount / fieldCount ).Render(ctx, ctx.Writer); err != nil {
+	if err := views.FormStatsPartial(fieldCount, rowCount/fieldCount).Render(ctx, ctx.Writer); err != nil {
 		err_msg := fmt.Sprintf("Error while rendering form stats: %s", err)
 		if err := views.AlertMessage(false, err_msg).Render(ctx, ctx.Writer); err != nil {
 			fmt.Printf("error while rendering error message for %s\n", err_msg)

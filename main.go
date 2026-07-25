@@ -1,14 +1,12 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/ThatAdwaithGuy/req/db/query"
-	"github.com/a-h/templ"
 	"github.com/gin-gonic/gin"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -18,15 +16,6 @@ type Query struct {
 	query *query.Queries
 }
 
-func RenderToString(ctx context.Context, component templ.Component) (string, error) {
-	var buf bytes.Buffer
-
-	if err := component.Render(ctx, &buf); err != nil {
-		return "", err
-	}
-
-	return buf.String(), nil
-}
 func main() {
 	r := gin.Default()
 	ctx := context.Background()
